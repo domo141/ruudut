@@ -1,0 +1,32 @@
+#+STARTUP: showall
+
+#+BEGIN_HTML
+<p>
+ <a href="Suomeksi.org"><img src="../suomen-lippu.svg" align="right" height="48" width="96"/></a>
+ Briefly:
+</p>
+#+END_HTML
+
+#+BEGIN_EXAMPLE
+  $ urxvt -fn xft:Hack-12:embolden -letsp -2 &
+
+  $ fontforge emblcond-90%-hack.pe path/to/Hack-*.ttf ;: makes EmblCondHack...
+  $ fontforge copy2embl.pe path/to/Hack-*.ttf ;: makes EmblHack...ttf
+
+  $ mkdir $HOME/.config/fontconfig/
+  $ cp ./emblhack-fonts.conf $HOME/.config/fontconfig/fonts.conf
+  $ mkdir -p $HOME/.local/share/fonts/hack/
+  $ mv ./Embl*Hack-*.ttf $HOME/.local/share/fonts/hack/
+  $ fc-cache -fv
+  $ fc-list | grep Hack-
+  $ ./font-in-urxvt.sh xft:EmblCondHack-12
+  $ ./font-in-emacs.sh EmblCondHack-12
+
+  $ emacs -fn EmblCondHack-12 &
+#+END_EXAMPLE
+
+The X resource 'Xft.dpi:' affecs the fontsize in urxvt,
+the environment variable GTK_DPI_SCALE in emacs-gtk3-*.
+
+# (fundamental-mode)
+# (org-mode)

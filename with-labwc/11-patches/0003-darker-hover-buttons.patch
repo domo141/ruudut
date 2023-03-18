@@ -1,0 +1,28 @@
+From 7cbae29f4f81a4dada218252a0e44375259d58a0 Mon Sep 17 00:00:00 2001
+From: Tomi Ollila <tomi.ollila@iki.fi>
+Date: Wed, 24 Apr 2024 22:48:26 +0300
+Subject: [PATCH] + darker hover buttons...
+
+To make it more visible when pointer is over button -- especially
+in those cases part of a button is occluded by other view.
+---
+ src/theme.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/theme.c b/src/theme.c
+index 34b4d4a1..0133db86 100644
+--- a/src/theme.c
++++ b/src/theme.c
+@@ -79,7 +79,8 @@ static void
+ draw_hover_overlay_on_button(cairo_t *cairo, int w, int h)
+ {
+ 	/* Overlay (pre-multiplied alpha) */
+-	float overlay_color[4] = { 0.15f, 0.15f, 0.15f, 0.3f};
++	//float overlay_color[4] = { 0.15f, 0.15f, 0.15f, 0.3f};
++	float overlay_color[4] = { 0.0f, 0.0f, 0.0f, 0.6f};
+ 	set_cairo_color(cairo, overlay_color);
+ 	int r = rc.theme->window_button_hover_bg_corner_radius;
+ 
+-- 
+2.49.0
+

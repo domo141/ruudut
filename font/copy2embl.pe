@@ -1,0 +1,16 @@
+#!/usr/bin/env fontforge
+
+// name: copy2embl.pe; license: unlicense
+// this just prefixes the font names with 'Embl' for fonts.conf to match
+// the file emblhack-fonts.conf has entry for 'EmblHack'.
+
+pfx = "Embl" // fonts.conf to be used to embolden
+
+while ($argc > 1)
+    Open($1)
+    SetFontNames("", pfx + $familyname)
+    //Save(pfx + $1:r:t + ".std")
+    Generate(pfx + $1:t)
+    Close()
+    shift
+endloop

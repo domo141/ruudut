@@ -1,0 +1,83 @@
+#+STARTUP: showall
+
+* ootappa
+
+#+BEGIN_HTML
+<table><tr><td width="50%">
+
+<b>Red countdown timer on the middle of the screen</b>
+<br/>
+(One) purpose of this is to delay screen locking after
+timeout reached - in case the screen locking software
+does not provide such a feature.
+
+</td><td width="50%">
+
+<b>Punainen ajastin näytön keskellä</b>
+<br/>
+(Yksi) käyttötarkoitus on viivyttää näytön lukitusta
+ja osoittaa käyttäjälle että kohta se tapahtuu &mdash;
+siinä tapauksessa ettei itse näytönlukitussovellus
+tarjoa tällaista ominaisuutta.
+
+</td></tr></table>
+#+END_HTML
+
+[[uota-27.png]]
+
+#+BEGIN_HTML
+<table><tr><td width="50%">
+
+Two examples how to hook this with <i>swayidle</i>.
+
+</td><td width="50%">
+
+Pari käyttöesimerkkiä <i>swayidle</i>n ajamana.
+
+</td></tr></table>
+#+END_HTML
+
+
+#+BEGIN_EXAMPLE
+
+setsid -f swayidle -w \
+    timeout 300 'exec ootappa 22 -e swaylock -f -c 32'16'48' \
+    timeout 600 'exec wlopm --off \*' \
+    resume 'exec wlopm --on \*' \
+    before-sleep 'exec swaylock -f -c 32'16'48'
+
+#+END_EXAMPLE
+
+#+BEGIN_EXAMPLE
+
+#/bin/sh -euf
+# this is xxx.sh
+if test "$1" = lock
+then
+    case $0 in */*) cd "${0%/*}"; esac
+    test "${2-}" = 1 && test -x ootappa && ./ootappa 22 && exit 0
+    test -f x11bg.xpm &&
+    exec swaylock -e -f -t -i x11bg.xpm -c 32'16'48
+    exec swaylock -e -f -c 32'16'48
+    exit not reached
+fi
+
+--8<----8<----8<----8<----8<----8<--
+
+setsid -f swayidle -w \
+    timeout 300 'exec path/to/xxx.sh lock 1' \
+    timeout 600 'exec wlopm --off \*' \
+    resume 'exec wlopm --on \*' \
+    before-sleep 'exec path/to/xxx.sh lock 0'
+
+#+END_EXAMPLE
+
+The glyphs are extracted from lmroman12-bold.otf (Latin Modern)
+and are licensed under The GUST font license (GFL).
+
+Glyyfit (0-9) on poimittu tiedostosta lmroman12-bold.otf joka
+on lisensoitu GUST -fonttilisenssillä (kuten mainittu tarkemmin
+tuossa yläpuolella).
+
+# (fundamental-mode)
+# (org-mode)

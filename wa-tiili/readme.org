@@ -1,0 +1,36 @@
+#+STARTUP: showall
+
+#+BEGIN_HTML
+<table><tr><td>
+
+<b>Upper right corner of a screen</b>
+<br/>
+workspace, day, weekday, time,
+ISO week number and battery %
+<br/>
+<br/>
+<b>Näytön oikea yläkulma</b>
+<br/>
+työpöytä, päivä, viikonpäivä, aika,
+viikkonumero ja akun varaus
+
+</td><td>
+
+<img src="ruutua.svg"/>
+
+</td></tr></table>
+
+<table><tr><td>
+
+Note: tiili uses custom <i>xxx-workspace-index-me</i> wayland protocol
+for workspace number; tiiluus replaces this with <i>ext-workspaces</i>.
+<br/> future work probably uses <i>ext-workspaces</i> exclusively.
+
+</td><td>
+
+Huomaa: tiili käyttää <i>xxx-workspace-index-me</i> wayland-protokollaa
+työpöydän numeroon; tiiluus käyttää <i>ext-workspaces</i>:ia tuon sijaan.
+<br/> jatkokehityksessä käytettäneen vain <i>ext-workspaces</i>:ia.
+
+</td></tr></table>
+#+END_HTML

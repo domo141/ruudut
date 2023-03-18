@@ -1,0 +1,28 @@
+#!/usr/bin/env fontforge
+
+// name: list.pe; license: unlicense
+
+// list range(s) of existing glyphs in a font file...
+// well, this either prints 0-65536, or then jams...
+// ehkä joku tieto kertoo kertoo onko vai ei...
+
+while ($argc > 1)
+    Open($1)
+    Print($familyname)
+    SelectAll() //; Select(0, 40)
+
+    f = 0; n = 0
+    foreach
+      u = GlyphInfo("Unicode") //; Print(u)
+      if (u != n)
+	  if (n > 0) Print(u, ": ", f, "-", n); endif
+	  f = u
+	  n = u + 1
+      else
+	  n = n + 1
+      endif
+    endloop
+    Print(u, ". ", f, "-", n)
+    Close()
+    shift
+endloop

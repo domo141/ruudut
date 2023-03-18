@@ -1,0 +1,50 @@
+From 9b74f57c265d976189d46a016613c2d2547b7657 Mon Sep 17 00:00:00 2001
+From: Tomi Ollila <tomi.ollila@iki.fi>
+Date: Sun, 4 Jun 2023 18:33:17 +0300
+Subject: [PATCH] + osd w/ GotoDesktop wrap="no"
+
+If, on "desktop 1" one tries to start to go "left" with
+wrap="no", this change makes compositor to show the OSD
+to show one is on desktop 1 (without this OSD is not shown).
+
+I was somewhat confident this is good change, but after the
+change I had to do after commit ce36cbac2 (2023-09-26)
+(due to conflict) I don't know anymore.
+---
+ src/workspaces.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/workspaces.c b/src/workspaces.c
+index 14ed51a9..79f5e018 100644
+--- a/src/workspaces.c
++++ b/src/workspaces.c
+@@ -246,7 +246,7 @@ get_prev(struct workspace *current, struct wl_list *workspaces, bool wrap)
+ 	if (target_link == workspaces) {
+ 		/* Current workspace is the first one */
+ 		if (!wrap) {
+-			return NULL;
++			return current; /* w/ NULL could not _osd_show() */
+ 		}
+ 		/* Roll over */
+ 		target_link = target_link->prev;
+@@ -261,7 +261,7 @@ get_next(struct workspace *current, struct wl_list *workspaces, bool wrap)
+ 	if (target_link == workspaces) {
+ 		/* Current workspace is the last one */
+ 		if (!wrap) {
+-			return NULL;
++			return current; /* w/ NULL could not _osd_show() */
+ 		}
+ 		/* Roll over */
+ 		target_link = target_link->next;
+@@ -343,6 +343,8 @@ workspaces_switch_to(struct workspace *target, bool update_focus)
+ 	assert(target);
+ 	struct server *server = target->server;
+ 	if (target == server->workspaces.current) {
++		/* _osd_show(server); // worked before ce36cbac2 (IIRC) */
++		if (update_focus) _osd_show(server);
+ 		return;
+ 	}
+ 
+-- 
+2.49.0
+

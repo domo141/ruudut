@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Glyphs from lmroman12-bold.otf - GUST font license (GFL) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="192">
+  <rect width="256" height="192" fill="#f00" stroke-width="2" stroke="#088"/>
+  <g fill="#000" transform="translate(30 150) scale(0.18 -0.18)">
+    <path d="M483 0l-195 2l-194 -2v43h139v525c-40 -13 -93 -19 -128 -19h-19v43h19c22 0 133 0 207 64c32 0 34 0 34 -29v-584h137v-43z"/>
+  </g>
+  <g fill="#000" transform="translate(125 150) scale(0.18 -0.18)">
+    <path d="M505 215l-29 -215h-420v17c0 18 0 20 10 29l217 227c41 43 94 115 94 193c0 72 -44 147 -136 147c-21 0 -74 -4 -114 -50c31 -4 62 -25 62 -67c0 -46 -36 -67 -67 -67c-23 0 -66 15 -66 68c0 95 97 159 210 159c132 0 239 -71 239 -189c0 -96 -68 -147 -179 -230 l-144 -119h155c15 0 93 0 101 7c15 10 22 69 25 90h42z"/>
+  </g>
+</svg>

@@ -1,0 +1,45 @@
+#+STARTUP: showall
+
+#+BEGIN_HTML
+<p>
+ <a href="Suomeksi.org"><img src="../suomen-lippu.svg" align="right" height="48" width="96"/></a>
+ <h1>Keyboard layout fi-ohjelmoija</h1>
+</p>
+#+END_HTML
+
+This layout uses the /fi-kotoistus/ as a base layout, and remaps some
+keycodes so that it is easier for a programmer to use; see pix below.
+
+#+ATTR_HTML: :width 900px :height 310px
+[[./fi-ohjelmoija.svg]]
+
+The main change is to bind ~[~, ~{~, ~]~ and ~}~ to the same keys
+as used by US (and UK) keyboards. The "dead keys" in the key just left
+of the ENTER key are moved elsewhere (see table below). The characters
+~å~ and ~Å~ - although not needed very often in finnish text (if ever?),
+are "kept" in the same key as in /fi-kotoistus/, just moved behind the
+AltGr modifier.
+
+** Use
+
+Copy the file [[xkb,symbols,fi-ohjelmoija]] as
+~$HOME/.config/xkb/symbols/fi-ohjelmoija~, and set
+~xkb_layout = fi-ohjelmoija~ in display server configuration.
+
+** Control
+
+For programmer it is more convenient to have (second) /Control/ in place
+of /Caps Lock/. A separate ~xkb_options = caps:ctrl_modifier~ makes that
+happen - whichever way the Wayland compositor (or X server) gets it.
+
+** Moved Dead Keys
+
+| key       | AltGr                | Shift-AltGr         |
+|-----------+----------------------+---------------------|
+| 1         | dead_stroke (/)      | -                   |
+| Q         | dead_doubleacute (˝) | dead_abovering (˚)  |
+| Y         | dead_tilde (~)       | dead_macron (¯)     |
+| U         | dead_diaeresis (¨)   | dead_circumflex (^) |
+
+# (fundamental-mode)
+# (org-mode)

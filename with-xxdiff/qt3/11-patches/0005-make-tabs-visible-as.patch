@@ -1,0 +1,33 @@
+From a4a6a21e2be98577ea47c0c03839381f5331f100 Mon Sep 17 00:00:00 2001
+From: Tomi Ollila <tomi.ollila@iki.fi>
+Date: Wed, 7 Sep 2011 17:25:54 +0300
+Subject: [PATCH 5/7] =?UTF-8?q?+=20make=20tabs=20visible=20as=20=C2=BB?=
+ =?UTF-8?q?=C2=B7=C2=B7=C2=B7=C2=AB?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Some suitable latin1 chars to use there...
+---
+ src/buffer.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/buffer.cpp b/src/buffer.cpp
+index d823b24..9aa829a 100644
+--- a/src/buffer.cpp
++++ b/src/buffer.cpp
+@@ -612,8 +612,10 @@ const char* XxBuffer::renderTextWithTabs(
+             uint nspaces = tabWidth - (bcol % tabWidth);
+ 
+             // Output equivalent spaces for tab in the destination.
++            int nfm = 0;
+             for ( uint t = 0; t < nspaces; ++t ) {
+-               *pd++ = ' ';
++               //*pd++ = ' ';
++               *pd++ = (nfm++)? ((nfm == nspaces)? '\253': '\267'): '\273';
+                XX_CHECK( pd - _renderBuffer < _renderBufferSize );
+             }
+ 
+-- 
+2.49.0
+

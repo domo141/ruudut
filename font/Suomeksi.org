@@ -1,0 +1,32 @@
+#+STARTUP: showall
+
+#+BEGIN_HTML
+<p>
+ <a href="ReadMe.org"><img src="../eng.svg" align="right" height="48" width="96"/></a>
+ Lyhyesti:
+</p>
+#+END_HTML
+
+#+BEGIN_EXAMPLE
+  $ urxvt -fn xft:Hack-12:embolden -letsp -2 &
+
+  $ fontforge emblcond-90%-hack.pe path/to/Hack-*.ttf ;: tekee EmblCondHack...
+  $ fontforge copy2embl.pe path/to/Hack-*.ttf ;: tekee EmblHack...ttf
+
+  $ mkdir $HOME/.config/fontconfig/
+  $ cp ./emblhack-fonts.conf $HOME/.config/fontconfig/fonts.conf
+  $ mkdir -p $HOME/.local/share/fonts/hack/
+  $ mv ./Embl*Hack-*.ttf $HOME/.local/share/fonts/hack/
+  $ fc-cache -fv
+  $ fc-list | grep Hack-
+  $ ./font-in-urxvt.sh xft:EmblCondHack-12
+  $ ./font-in-emacs.sh EmblCondHack-12
+
+  $ emacs -fn EmblCondHack-12 &
+#+END_EXAMPLE
+
+X-resurssi 'Xft.dpi:' vaikuttaa fonttikokoon urxvt:ssa, ympäristomuuttuja
+GTK_DPI_SCALE emacsissa, joka käyttää ikkunointiin GTK-versiota 3.
+
+# (fundamental-mode)
+# (org-mode)

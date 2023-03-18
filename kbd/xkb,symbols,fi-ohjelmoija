@@ -1,0 +1,50 @@
+// coding: utf-8
+
+// this file as $HOME/.config/xkb/symbols/fi-ohjelmoija
+// xkb_layout = fi-ohjelmoija
+// I also set `xkb_options = caps:ctrl_modifier` for additional control
+
+default partial alphanumeric_keys  // I don't know what this line means...
+
+xkb_symbols "fi-ohjelmoija"
+{
+    // as seen in /usr/share/X11/xkb/symbols/fi (may work w/o kotoistus?)
+    //: -- original 'key' lines from ^
+    include "fi(kotoistus)"
+    name[Group1]="kehittäjän sulut, $ ja ` - tarkenäppäimiä siirretty";
+
+    //: <AD11> {[ aring, Aring, dead_doubleacute, dead_abovering ]};
+    //: <AD12> {[ dead_diaeresis, dead_circumflex, dead_tilde, dead_macron ]};
+    // qwertyuiop[] / QWERTYUIOP{} // ... åÅ, ... ~^
+    key <AD11> {[ bracketleft, braceleft, aring, Aring ]};
+    key <AD12> {[ bracketright, braceright, asciitilde, asciicircum ]};
+
+    //: <TLDE> {[ section, onehalf, dead_stroke, NoSymbol ]};
+    // left of '1': '`', '^', '§', '½'
+    key <TLDE> {[ grave, asciicircum, section, onehalf ]};
+
+    //: <AE04> {[ 4, currency, dollar, guillemotleft ]};
+    // '4', '$', '¤', '«' (dollar <-> currency)
+    key <AE04> {[ 4, dollar, currency, guillemotleft ]};
+
+    /// ...dead_keys lost above... ///
+
+    //: <AE01> {[ 1, exclam, NoSymbol, exclamdown ]};
+    // dead_stroke (/) from TLDE (left of '1') now `^§½
+    key <AE01> {[ 1, exclam, dead_stroke, exclamdown ]};
+
+    //: <AD07> {[ u, U, u, U ]};
+    // dead_diaeresis (¨), dead_circumflex (^) from AD12 now ]}~^
+    key <AD07> { [ u, U, dead_diaeresis, dead_circumflex ]};
+
+    //: <AD06> {[ y, Y, y, Y ]};
+    // dead_tilde (~), dead_macron (¯) from AD12 now ]}~^
+    key <AD06> {[ y, Y, dead_tilde, dead_macron ]};
+
+    key <AD01> {[ q, Q, q, Q ]};
+    // dead_doubleacute (˝) dead_abovering (˚) from AD11 now [{åÅ
+    key <AD01> {[ q, Q, dead_doubleacute, dead_abovering ]};
+};
+// see also: https://en.wikipedia.org/wiki/Diacritic
+// https://www.kotoistus.tksoft.com/linux/index-en.html
+// https://www.kotoistus.tksoft.com/linux/en_US_UTF-8_Compose.txt

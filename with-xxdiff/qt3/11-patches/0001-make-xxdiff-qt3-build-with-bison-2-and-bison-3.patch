@@ -1,0 +1,149 @@
+From 06b2ff73840968d9a9454ce81b2eef6062d26038 Mon Sep 17 00:00:00 2001
+From: Tomi Ollila <tomi.ollila@iki.fi>
+Date: Sat, 20 Jan 2024 19:27:57 +0200
+Subject: [PATCH 1/7] make xxdiff-qt3 build with bison 2 and bison 3
+
+Ported commit ab6471ae00be87fd033215a72c75d17a7652a2f6:
+
+From: Martin Blais <blais@furius.ca>
+Date: Sat, 20 Dec 2014 15:54:50 -0500
+Subject: [PATCH] Applied patch from
+         John Schmerge (<john dot schmerge at gmail dot com>)
+	 that will make this build with bison 2 and bison 3.
+
+on top of 9ee2fd4e7a096b1e1ab4367ab60328283a1c77a9
+---
+ src/resParser.cpp |  6 +++---
+ src/resParser.l   |  2 +-
+ src/resParser.y   | 29 ++++++++++++++++-------------
+ 3 files changed, 20 insertions(+), 17 deletions(-)
+
+diff --git a/src/resParser.cpp b/src/resParser.cpp
+index 729b03c..9775ea4 100644
+--- a/src/resParser.cpp
++++ b/src/resParser.cpp
+@@ -69,11 +69,11 @@
+  *============================================================================*/
+ 
+ // Parser routine defined in the yacc parser.
+-extern int resParserparse( void* );
++extern int resParserparse( XxResources* );
+ 
+ //------------------------------------------------------------------------------
+ //
+-void resParsererror( const char* msg )
++void resParsererror( void *, const char* msg )
+ {
+    // Send errors to stdout so we can filter out the debug info shmeglu while
+    // debugging parser.
+@@ -786,7 +786,7 @@ int parseFromKeywordList(
+       QString os;
+       QTextOStream oss( &os );
+       oss << "Unknown " << errmsg << ": " << name << flush;
+-      resParsererror( os.latin1() );
++      resParsererror( NULL, os.latin1() );
+    }
+    num = ERROR_TOKEN;
+    return ERROR_TOKEN;
+diff --git a/src/resParser.l b/src/resParser.l
+index 51c7f30..d676b3f 100644
+--- a/src/resParser.l
++++ b/src/resParser.l
+@@ -76,7 +76,7 @@ if ( input_stream_ptr->atEnd() ) {                                     \
+    result = YY_NULL;                                                   \
+ }                                                                      \
+ else {                                                                 \
+-   int ii = 0;                                                         \
++   unsigned int ii = 0;                                                \
+    for ( ; (ii < max_size) && (!input_stream_ptr->atEnd()); ++ii ) {   \
+ 	input_stream_ptr->readRawBytes( &buf[ii], 1 );                 \
+    }                                                                   \
+diff --git a/src/resParser.y b/src/resParser.y
+index 716ed40..9c15535 100644
+--- a/src/resParser.y
++++ b/src/resParser.y
+@@ -20,11 +20,6 @@
+  *
+  ******************************************************************************/
+ 
+-%union
+-{
+-    int   num;
+-    char* str;
+-}
+ %{
+ 
+ // xxdiff imports
+@@ -39,12 +34,23 @@
+ 
+ // The parser input is the resources object to fill in.
+ #define RESOURCES  ( static_cast<XxResources*>(resources) )
+-#define YYPARSE_PARAM resources
++%}
++
++%define api.pure
+ 
++%parse-param {XxResources * resources}
++
++%union
++{
++    int   num;
++    char* str;
++}
++
++%{
+ // Declare lexer from other compilation unit.
+ int resParserlex( YYSTYPE* yylval );
+ 
+-void resParsererror( const char* msg );
++void resParsererror( void *, const char* msg );
+ 
+ // Declare some parser functions and data defined in resParser.cpp
+ namespace XxResParserNS {
+@@ -54,8 +60,6 @@ bool readGeometry( const QString& val, QRect& geometry );
+ }
+ using namespace XxResParserNS; // Make sure we can use the above.
+ 
+-
+-
+ %}
+ 
+ /* generate header file */
+@@ -144,7 +148,6 @@ using namespace XxResParserNS; // Make sure we can use the above.
+ %type <num> boolkwd
+ 
+ %start xxdiffrc
+-%pure_parser
+ 
+ %%
+ xxdiffrc	: stmts
+@@ -188,7 +191,7 @@ prefgeometry	: PREFGEOMETRY COLON GEOMSPEC
+                       RESOURCES->setPreferredGeometry( geometry );
+                    }
+                    else {
+-                      yyerror( "Bad geometry specification." );
++                      yyerror( NULL, "Bad geometry specification." );
+                       // Should never happen, the lexer regexp should be tough
+                       // enough.
+                    }
+@@ -216,7 +219,7 @@ style		: STYLE COLON STRING
+                       err += QString( "\nValid styles are: " );
+                       err += styles.join( ", " );
+ #endif
+-                      yyerror( err.latin1() );
++                      yyerror( NULL, err.latin1() );
+ #if (QT_VERSION >= 0x030000)
+                    }
+ #endif
+@@ -230,7 +233,7 @@ accel		: ACCEL DOT ACCELNAME COLON STRING
+                       char buf[2048];
+                       ::snprintf( buf, 2048,
+                                   "Unrecognized accelerator: %s\n", $5 );
+-                      yyerror( buf );
++                      yyerror( NULL, buf );
+                    }
+                 }
+ 		;
+-- 
+2.49.0
+

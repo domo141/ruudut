@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="xxx_workspace_number_me_unstable_v2">
+  <copyright> Unlicense </copyright>
+
+  <interface name="zxxx_workspace_number_me_v2" version="1">
+    <description summary="workspace number me, v2, version 1">
+      A wayland protocol to give user hint of a workspace
+      (by number) (created: 2024-04-22).
+    </description>
+
+    <request name="workspace_number_me">
+      <description summary="ask for workspace 'number' when changes">
+        Request compositor to send 'workspace_number' event (once)
+        when workspace number differs from last_known value.
+      </description>
+      <arg name="last_known" type="int"/>
+    </request>
+
+    <event name="workspace_number">
+      <description summary="workspace 'number' that is">
+        Sent by compositor when workspace changes.
+        New 'workspace_number_me' request to get again.
+      </description>
+      <arg name="number" type="int"/>
+    </event>
+
+  </interface>
+</protocol>

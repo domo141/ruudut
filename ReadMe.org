@@ -1,0 +1,43 @@
+#+STARTUP: showall
+#+TOC: headlines 1
+
+# note: '#+BEGIN_EXPORT html' did not work (in a forge) when tried last time...
+# the one below may break anytime
+
+#+BEGIN_HTML
+<p align="center">
+ <img src="ruudut.svg" align="left" height="48" width="80"/>
+ <a href="Suomeksi.org"><img src="suomen-lippu.svg" align="right" height="48" width="96"/></a>
+ <h1>Ruudut</h1>
+</p>
+#+END_HTML
+
+Ruudut (pronounced /root/ and /do/ combined as /roo-do-t/); a collection
+of software to build up parts of a (minimal) wayland desktop environment.
+
++ [[font/ReadMe.org][font]] :: emboldened (and narrowed) /Hack/ font
+
++ [[kbd/ReadMe.org][kbd]] :: keymap /fi-ohjelmoija/ for easier programmer keys
+
++ [[tools]] :: various tools, for development and after-deployment use
+
+Wa- prefix is to separate Wayland Applications in their own listing block:
+
++ [[wa-ootappa]] :: red countdown timer in the middle of the screen
+
++ [[wa-tiili]] :: workspace, day and time, battery status - overlay "brick"
+
+With- prefix is to separate content used with existing desktop components:
+
++ [[with-labwc]] :: hacky patches and tunes to make labwc work better for my use
+
++ [[with-urxvt]] :: some urxvt specific tools
+
++ [[with-xxdiff/qt3]] :: patches to make xxdiff (qt3 version) suit better for my use
+
+Continuing (in ascii order) with non-grouped items:
+
++ [[wp]] :: the .xml files of wayland protocols used (now and in the past)
+
+# sometimes it is "easier" to edit in (fundamental-mode)
+# then, when one knows, or just looks around in (org-mode)

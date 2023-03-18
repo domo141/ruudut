@@ -1,0 +1,79 @@
+#+STARTUP: showall
+
+# note: #+BEGIN_EXPORT html did not work when tried last time...
+
+#+BEGIN_HTML
+<p>
+ <a href="ReadMe.org"><img src="../eng.svg" align="right" height="48" width="96"/></a>
+ <h1>Näppäimistöasettelu fi-ohjelmoija</h1>
+</p>
+#+END_HTML
+
+Suomalainen näppäimistöasettelu on hyvä suomen kielen tekstin
+kirjoittamiseen, mutta ohjelmoijalle (ehkä ei python), siinä
+on (mielestäni) hankalia ominaisuuksia:
+
+- ~{~, ~[~, ~]~ ja ~}~ tulee AltGr + 7/8/9/0 :äa painamalla
+
+No, siinä hankalin. Se että Shift-4 tuottaa ~¤~:n on kumma; mihin
+tuota käytetään? ~`~ on näppärä shelli (ja ehkä perl) -ohjelmoijalle,
+oletuksena se tulee ~+~:n oikealta puolelta (tarkenäppäimestä - dead key),
+kunhan sen jälkeen painaa välilyöntinäppäintä.
+
+Siksipä näitä on siirrelty -- ja niiden alta tarkenäppäimiä siirretty
+muualle:
+
+#+ATTR_HTML: :width 900px :height 310px
+[[./fi-ohjelmoija.svg]]
+
+** Siirrot
+
+Eli, ~[]~ ja ~{}~ on siirretty niille paikoille, missä ne on
+US-näppäinasettelussa. ~å~ ja ~Å~ tulee tässä nyt AltGr:n avulla (olisi
+voinut jättää vain tarkenäppäimen taaksi kun ei tuota nyt suomen kielessä
+käytä, mutta ehkä jotakuta ruåtsia paremmin osaavaa kiinnostaa...).
+=~= tulee (suoraan) AltGr plus tuo ylempi näppäin enteristä vasemmalle,
+ja ~^~ (suoraan) Shift-AltGr-sama. /fi-kotoistus/ -asettelussa - mikä tässä
+on pohjalla - nuo molemmat ovat tarkenäppäimiä (niistä myöhemmin (ehkä) lisää).
+
+Koska tuo ~¤~ on harvoin tarvittu, ja AltGr-4 on (mielestäni) hankalampi
+painaa kuin Shift-4, Shift-4 antaa ~$~:n ja AltGr-4 ~¤~:n.
+
+Tuossa 1:n vasemmalla puolella oli muistaakseni jotain tarpeettomia
+(vai oisko ne olleet ~§~ ja ~½~), siitä tulee nyt ~`~, ja ~^~ shiftin kanssa
+(en kyllä tätä ~^~:ta koskaan muista, keksisköhän käyttökelpoisempaa),
+ja siis ~§~ AltGr:n kanssa ja ~½~ Shift-AltGr:n kanssa.
+
+** Käyttöönotto
+
+Kopioi tiedosto [[xkb,symbols,fi-ohjelmoija]] nimelle
+~$HOME/.config/xkb/symbols/fi-ohjelmoija~ ja muuta/lisää
+~xkb_layout = fi-ohjelmoija~ ikkunointijärjestelmän asetuksiin.
+
+# muista (mitähän piti muistaa :O)
+
+** Control
+
+Näiden lisäksi siis tarkenäppäimiä siirretty mutta tähän väliin ainakin
+Emacs-käyttäjille näppärä lisäys -- /Caps Lock/ in korvaus /Control/
+-"näppäimellä". Sitä ei saane ympättyä tuohon /fi-ohjelmoija/ -tiedostoon,
+vaan se on tehtävä erillisellä ~xkb_options = caps:ctrl_modifier~ -säädöllä...
+
+** Tarkenäppäimet
+
+~dead_acute~, ~dead_grave~, ~dead_cedilla~ ja ~dead_ogonek~ pysyivät
+alkuperäisillä paikoillaan (spacen kanssa tulee ~´~ ~`~ ~¸~ ja ~˛~)
+numeroiden ja ~+?~:n jälkeen. Ne tarkkenäppäilyt jotka ylikirjoitettiin
+muilla kiinnityksillä ovat nyt siirretty seuraavasti:
+
+| näppäin   | AltGr                | Shift-AltGr         |
+|-----------+----------------------+---------------------|
+| 1         | dead_stroke (/)      | -                   |
+| Q         | dead_doubleacute (˝) | dead_abovering (˚)  |
+| Y         | dead_tilde (~)       | dead_macron (¯)     |
+| U         | dead_diaeresis (¨)   | dead_circumflex (^) |
+
+(Shift-AltGr-1:lla tulee ~¡~ (exclamdown, siis tarkenäpäyttämättä).
+
+# (fundamental-mode)
+# (org-mode)

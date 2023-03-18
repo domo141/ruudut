@@ -1,0 +1,28 @@
+From ef78e4166c891671ba4429975b33774916256d12 Mon Sep 17 00:00:00 2001
+From: Tomi Ollila <tomi.ollila@iki.fi>
+Date: Sun, 14 May 2023 20:46:15 +0300
+Subject: [PATCH] + round_to_increment w/o (inc / 2)
+
+Now I haven't been able to resize (X11) window over the bottom (or right)
+edge of the screen when resizing from the side/corner of a window.
+---
+ src/view.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/view.c b/src/view.c
+index 89743ecd..32778d07 100644
+--- a/src/view.c
++++ b/src/view.c
+@@ -717,7 +717,8 @@ round_to_increment(int val, int base, int inc)
+ 	if (base < 0 || inc <= 0) {
+ 		return val;
+ 	}
+-	return base + (val - base + inc / 2) / inc * inc;
++	//return base + (val - base + inc / 2) / inc * inc;
++	return base + (val - base) / inc * inc;
+ }
+ 
+ void
+-- 
+2.49.0
+

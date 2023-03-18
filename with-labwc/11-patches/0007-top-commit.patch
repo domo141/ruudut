@@ -1,0 +1,339 @@
+From 70e53ddc8cd52944cf1453a1149d80236dcfe393 Mon Sep 17 00:00:00 2001
+From: Tomi Ollila <tomi.ollila@iki.fi>
+Date: Tue, 14 Jan 2025 06:45:06 +0200
+Subject: [PATCH] + top commit +
+
+---
+ GNUmakefile         | 255 ++++++++++++++++++++++++++++++++++++++++++++
+ binpatch-version.pl |  57 ++++++++++
+ 2 files changed, 312 insertions(+)
+ create mode 100644 GNUmakefile
+ create mode 100755 binpatch-version.pl
+
+diff --git a/GNUmakefile b/GNUmakefile
+new file mode 100644
+index 00000000..1570d2f9
+--- /dev/null
++++ b/GNUmakefile
+@@ -0,0 +1,255 @@
++
++# ln -sr pick-changes/GNUmakefile .
++
++# strace make ... s ... 2>&1 | grep stat
++# strace -ff -omsl make ... s ...
++
++.ONESHELL: # gnu make >= 3.82 feature
++SHELL = /bin/dash
++.SHELLFLAGS = -eufc
++#.SHELLFLAGS = -xeufc
++.NOTPARALLEL:
++.SILENT:
++.SUFFIXES:
++MAKEFLAGS += --no-builtin-rules --no-builtin-variables
++MAKEFLAGS += --warn-undefined-variables
++unexport MAKEFLAGS
++
++# v no override, so one can try things v
++MAKEFILE := $(MAKEFILE_LIST)  # hint: make -pn -f /dev/null
++# fyi: more .PHONYs, less *stat(2)s (remove if needed for dependency)
++.PHONY: $(MAKEFILE)
++
++# utf-8 middle dot (\u00b7)
++override P := ·
++#override P := ?
++rcp ?=
++override FOTS :=
++
++override define cmd_and_args =
++override rcp := $P$(strip $1)$P
++.PHONY: $1 $(rcp)
++endef
++
++override define phony_target =
++override rcp := $P$(strip $1)$P
++.PHONY: $1 $(rcp)
++override FOTS += $1
++endef
++
++
++override define sh :=
++#set -x
++die () { printf '%s\n' '' "$$@" ''; exit 1; } >&2
++x () { printf '+ %s\n' "$$*" >&2; "$$@"; }
++x_eval () { printf '+ %s\n' "$$*" >&2; eval "$$*"; }
++x_exec () { printf '+ %s\n' "$$*" >&2; exec "$$@"; }
++endef
++
++
++$(eval $(call phony_target, help ))
++$(rcp):
++	echo Commands:
++#	#set -x
++	exec awk '$$1 == "$$(eval" { C = $$4 }
++		/^\$$\(rcp.*#/ { sub(".*#",""); printf "  %-6s %s\n",C,$$0 }' \
++	$(MAKEFILE)
++
++
++$(eval $(call cmd_and_args, b ))
++$(rcp): # build
++	$(sh)
++	test -f data/labwc.desktop || die "Not in labwc git toplevel dir (?)"
++	if test -d build
++	then	it=
++	else
++		case '$(ARGS)'
++		in 1)	arg=--wrap-mode=nofallback
++		;; 2)	arg=
++		;; 3)	arg=--force-fallback-for=wlroots
++		;; 4)	arg=--force-fallback-for=libsfdo
++		;; 5)	arg=--wrap-mode=nodownload
++		;; '')	exec >&2; echo 'Usage: make $(MAKECMDGOALS) {number}'
++			grep 'arg[=]' $(MAKEFILE)
++			exit 1
++		;; *)	die "arg '$(ARGS)' not '1', '2' nor '3'"
++		esac
++		it=`date +%s`
++		x time meson setup -Dxwayland=enabled $$arg build/
++	fi
++	export SOURCE_DATE_EPOCH=`git log -1 --format=%ct`
++	st=`date +%s`
++	set -x
++	time meson compile -C build/
++	{ set +x; } 2>/dev/null
++	et=`date +%s`
++	test "$$it" && echo Setup wall time: $$((st - it)) sec.
++	echo Build wall time: $$((et - st)) sec.
++	test "$$it" && echo Total rebuild wall time: $$((et - it)) sec.
++#	# opportunistic; binarypatch fail does not fail build (but make) ...
++	test "$$it" || exec ./binpatch-version.pl
++	echo
++
++
++$(eval $(call phony_target, clean ))
++$(rcp):
++	set -x
++	rm -rf build
++
++
++$(eval $(call cmd_and_args, rb ))
++$(rcp):    $Pclean$P $Pb$P ## rebuild
++
++
++$(eval $(call phony_target, l1 ))
++$(rcp):   # git git -P log --oneline --boundary since wt-yyyy-mm-dd-{commit}
++	$(sh)
++	set -- $(subst -, ,$(notdir $(CURDIR)))
++	test $$# -ge 5 || { IFS=-; die "cannot get base from dirname '$$*'"; }
++	test $${#5} -ge 7 || die "length if '$$5' less than 7"
++	case $$5 in *[!0-9a-f]*) die "'$$5' not [0-9a-f]*" ;; esac
++	x_exec git -P log --oneline --boundary $$5..
++
++
++$(eval $(call phony_target, ria ))
++$(rcp):   # git rebase interactive autostash since wt-yyyy-mm-dd-{commit}
++	$(sh)
++	set -- $(subst -, ,$(notdir $(CURDIR)))
++	test $$# -ge 5 || { IFS=-; die "cannot get base from dirname '$$*'"; }
++	test $${#5} -ge 7 || die "length if '$$5' less than 7"
++	case $$5 in *[!0-9a-f]*) die "'$$5' not [0-9a-f]*" ;; esac
++	x_exec git rebase --interactive --autostash $$5
++
++
++$(eval $(call phony_target, f-p ))
++$(rcp):   # git format-patch since wt-yyyy-mm-dd-{commit}
++	$(sh)
++	set -- $(subst -, ,$(notdir $(CURDIR)))
++	test $$# -ge 5 || { IFS=-; die "cannot get base from dirname '$$*'"; }
++	test $${#5} -ge 7 || die "length if '$$5' less than 7"
++	case $$5 in *[!0-9a-f]*) die "'$$5' not [0-9a-f]*" ;; esac
++	test -d 11-patches-new && rm -rf 11-patches-new
++	export FILTER_BRANCH_SQUELCH_WARNING=1
++	echo format-patch since commit $$5
++	git filter-branch -f \
++	    --setup "#set -x
++		eval `git log -1 --format='ct=%ct at=%at' $$5`"'
++		test $$ct -ge $$at && RSECS=$$ct || RSECS=$$at
++		RSECS=$$(( (RSECS / 60 + 1) * 60 ))
++	    '\
++	    --env-filter '
++		at=$${GIT_AUTHOR_DATE#@}; az=$${at##* }; at=$${at%% *}
++		test $$at -gt $$RSECS && RSECS=$$at || RSECS=$$((RSECS + 1))
++		GIT_COMMITTER_DATE="@$$RSECS $$az"
++	    ' $$5..
++	mkdir 11-patches-new
++	x_exec git format-patch -o 11-patches-new -N $$5..
++
++
++$(eval $(call phony_target, jl ))
++$(rcp):   # labwc in journalctl log
++	echo LABWC_PID=$$LABWC_PID
++	exec journalctl -b --no-hostname -o cat _PID=$$LABWC_PID
++
++
++$(eval $(call phony_target, nmd ))
++$(rcp):  # diff the output of nm, built labwc, and the "installed" one
++	set -- build/labwc $$HOME/.local/libexec/labwc
++	ls -l $$*
++	nm "$$1" > nm1 || { rm nm1; exit; }
++	exec 8< nm1; rm nm1
++	nm "$$2" > nm2 || { rm nm2; exit; }
++	exec 9< nm2; rm nm2
++	exec diff --color=always -u /dev/fd/8 /dev/fd/9
++
++
++$(eval $(call cmd_and_args, run ))
++$(rcp):  # run $(CURDIR)/build/labwc when PWD=$HOME
++	$(sh)
++	x cd $$HOME
++	case '$(ARGS)'	in d) d=-d
++			;; dd) d=; export WAYLAND_DEBUG=1
++			;; ddd) d=-d; export WAYLAND_DEBUG=1
++			;; *) d=
++	esac
++	x_exec $(CURDIR)/build/labwc $$d
++
++
++$(eval $(call phony_target, upd ))
++$(rcp):   # update labwc in $HOME/.local/libexec
++	$(sh)
++	ls -l build/labwc
++	if test -f $$HOME/.local/libexec/labwc
++	then	cmp -s $$HOME/.local/libexec/labwc build/labwc &&
++		die "already updated"
++		(
++		cd $$HOME/.local/libexec/.
++		IFS=' .-:'
++		set -- `stat -c %y labwc`
++		x_exec mv labwc labwc-$$1$$2$$3-$$4$$5$$6
++	) fi
++	x_exec cp -i build/labwc $$HOME/.local/libexec/.
++
++
++$(eval $(call phony_target, llb ))
++$(rcp):   # list labwc binaries in $HOME/.local/libexec
++	$(sh)
++	x cd $$HOME/.local/libexec
++	set +f
++	test -f labwc && l=labwc || l=
++	x_eval "grep -aom1 'labwc [0-9][--y]*' labwc-* $$l"
++
++
++
++$(eval $(call cmd_and_args, s ))
++$(rcp):    # show code of any of the commands listed here
++	echo
++	e=
++	for a in $(ARGS)
++	do e=$$e"/eval.*, $$a/,"'/^$$/p;'
++	done
++	exec sed -n "$$e" $(MAKEFILE)
++	exit not reached
++
++
++$(eval $(call phony_target, vars. ))
++$(rcp):
++	$(foreach v,$(.VARIABLES),$(info $(origin $v) $(flavor $v) $v = $($v)))
++
++# -----
++
++.PHONY: .cmdone.
++.cmdone.: ; $(eval override FOTS :=)
++
++override define cmdone =
++ifneq ($(FOTS),)
++$$(error '$(subst $P,,$1)': command/target not found)
++endif
++endef
++
++#DEFAULT: ; $(info $(call cmdone,$@))
++.DEFAULT: ; $(eval $(call cmdone,$@))
++
++# recursively set args after cmd, fyi: $(info $(call ... used to figure out $$s
++override define setargs =
++ifeq ($(CMD),$(firstword $1))
++ARGS := $$(wordlist 2, 9999, $1)
++else
++$(eval $(firstword $1): $P$(firstword $1)$P)
++$$(eval $$(call setargs, $(wordlist 2, 9999, $1)))
++endif
++endef
++
++override CMD := $(firstword $(filter-out $(FOTS), $(MAKECMDGOALS)))
++ifdef CMD
++#(info $(call setargs, $(MAKECMDGOALS)))
++$(eval $(call setargs, $(MAKECMDGOALS)))
++.PHONY: $(CMD)
++$(CMD): $P$(CMD)$P .cmdone.
++else
++$(foreach var, $(FOTS), $(eval $(var): $P$(var)$P))
++endif
++
++# Local variables:
++# mode: makefile
++# End:
+diff --git a/binpatch-version.pl b/binpatch-version.pl
+new file mode 100755
+index 00000000..c1811fce
+--- /dev/null
++++ b/binpatch-version.pl
+@@ -0,0 +1,57 @@
++#!/usr/bin/perl
++# -*- mode: cperl; cperl-indent-level: 4 -*-
++# $ binpatch-version.pl $
++#
++# Author: Tomi Ollila -- too ät iki piste fi
++#
++#	Copyright (c) 2024 Tomi Ollila
++#	    All rights reserved
++#
++# Created: Sat 08 Jun 2024 12:06:34 EEST too
++# Last modified: Sun 09 Jun 2024 19:44:08 +0300 too
++
++use 5.8.1;
++use strict;
++use warnings;
++
++my $labwc = 'build/labwc'; # could be given as arg
++
++die "'$labwc' not built" unless -x $labwc;
++my $flen = -s _;
++
++my $gver = qx/git describe --dirty/;  # --abbrev={n} would be nice maeby
++chomp $gver;
++
++open I, '+<:mmap', $labwc or die $!;
++
++my $rlen = read I, $_, $flen;
++die "$rlen != $flen" unless $rlen == $flen;
++
++unless (/(\d[\d.-]+-\d+-g[%-y]+)/g) { # 0.1.2-34-g5678abc(?:-dirty)?
++    die "Cannot find version string in $labwc\n";
++}
++my $fv = $1;
++#$gver =~ s/-dirty//;
++#$gver = '0.7.2-66-g12345678';
++my $verlen = length $gver;
++
++die "'$gver' and '$fv' do not have same length\n" unless $verlen == length $fv;
++
++my $pos = (pos) - $verlen;
++
++eval 'END { syswrite STDOUT, "\n" }';
++
++if ((substr $_, $pos, $verlen) eq $gver) {
++    print "Note: version '$gver' already in $labwc\n";
++    exit
++}
++
++while (1) {
++    seek I, $pos, 0; # 0: seek_set
++    syswrite I, $gver;
++    $pos += $verlen;
++    $pos = index $_, $fv, $pos;
++    last if $pos < 0;
++    #print $pos, "\n";
++    #substr $_, $pos $gverlen, $gver; # did not wrok :/
++}
+-- 
+2.49.0
+

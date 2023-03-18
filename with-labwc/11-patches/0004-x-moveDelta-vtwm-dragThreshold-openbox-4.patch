@@ -1,0 +1,77 @@
+From 6db6d87397f08465897a4441ec58e359131c746f Mon Sep 17 00:00:00 2001
+From: Tomi Ollila <tomi.ollila@iki.fi>
+Date: Sun, 31 Mar 2024 22:12:08 +0300
+Subject: [PATCH] x moveDelta (vtwm), dragThreshold (openbox) -- 4
+
+I used to mention moveDelta in fluxbox, too -- but could not
+find that with git grep in repo -- just to find out that I
+had personal patch adding that option to fluxbox (hmm, would
+they still be interested... :D)
+---
+ src/input/cursor.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/src/input/cursor.c b/src/input/cursor.c
+index 2963ceff..cfde77eb 100644
+--- a/src/input/cursor.c
++++ b/src/input/cursor.c
+@@ -573,6 +573,8 @@ cursor_get_resize_edges(struct wlr_cursor *cursor, struct cursor_context *ctx)
+ 	return resize_edges;
+ }
+ 
++static double xxx_press_x = -10.0, xxx_press_y = -10.0;
++
+ bool
+ cursor_process_motion(struct server *server, uint32_t time, double *sx, double *sy)
+ {
+@@ -599,6 +601,12 @@ cursor_process_motion(struct server *server, uint32_t time, double *sx, double *
+ 		dnd_icons_move(seat, seat->cursor->x, seat->cursor->y);
+ 	}
+ 
++	///wlr_log(WLR_ERROR, "sx: %f  sy: %f ", ctx.sx, ctx.sy);
++	///wlr_log(WLR_ERROR, "cx: %f  cy: %f ", seat->cursor->x, seat->cursor->y);
++	double dx = seat->cursor->x - xxx_press_x;
++	double dy = seat->cursor->y - xxx_press_y;
++	if (dx * dx + dy * dy >= 16) { /* moveDelta / dragThreshold 4 */
++
+ 	struct mousebind *mousebind;
+ 	wl_list_for_each(mousebind, &rc.mousebinds, link) {
+ 		if (mousebind->mouse_event == MOUSE_ACTION_DRAG
+@@ -612,7 +620,7 @@ cursor_process_motion(struct server *server, uint32_t time, double *sx, double *
+ 			actions_run(seat->pressed.view, server,
+ 				&mousebind->actions, &seat->pressed);
+ 		}
+-	}
++	}} ///else { printf("%f %f\n", dx, dy); }
+ 
+ 	struct wlr_surface *old_focused_surface =
+ 		seat->seat->pointer_state.focused_surface;
+@@ -924,6 +932,7 @@ handle_release_mousebinding(struct server *server,
+ 			default:
+ 				continue;
+ 			}
++			///wlr_log(WLR_ERROR, "RILIIZ");
+ 			actions_run(ctx->view, server, &mousebind->actions, ctx);
+ 		}
+ 	}
+@@ -982,6 +991,9 @@ handle_press_mousebinding(struct server *server, struct cursor_context *ctx,
+ 				&& modifiers == mousebind->modifiers) {
+ 			switch (mousebind->mouse_event) {
+ 			case MOUSE_ACTION_DRAG: /* fallthrough */
++			    xxx_press_x = server->seat.cursor->x;
++			    xxx_press_y = server->seat.cursor->y;
++			    /* fallthrough */
+ 			case MOUSE_ACTION_CLICK:
+ 				/*
+ 				 * DRAG and CLICK actions will be processed on
+@@ -1009,6 +1021,7 @@ handle_press_mousebinding(struct server *server, struct cursor_context *ctx,
+ 			}
+ 			consumed_by_frame_context |= mousebind->context == LAB_SSD_FRAME;
+ 			consumed_by_frame_context |= mousebind->context == LAB_SSD_ALL;
++			///wlr_log(WLR_ERROR, "PREZZZ");
+ 			actions_run(ctx->view, server, &mousebind->actions, ctx);
+ 		}
+ 	}
+-- 
+2.49.0
+

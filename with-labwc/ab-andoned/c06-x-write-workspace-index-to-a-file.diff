@@ -1,0 +1,91 @@
+x write workspace 'index' to a file...
+
+int xxx_open_f4w(char chr1, char chr2) implemented in 
+0005-x-add-xxx-sigwinch-to-views.ch-SIGWINCH-to-dump-view.patch
+
+Created: ~ Mon Mar 25 21:25:57 2024 +0200
+
+---
+ include/xxx/xxx-entry.ch | 38 ++++++++++++++++++++++++++++++++++++++
+ src/workspaces.c         |  4 ++++
+ 2 files changed, 42 insertions(+)
+
+diff --git include/xxx/xxx-entry.ch include/xxx/xxx-entry.ch
+index f491354b..97ffd152 100644
+--- include/xxx/xxx-entry.ch
++++ include/xxx/xxx-entry.ch
+@@ -17,7 +17,40 @@
+ 
+ int xxx_open_f4w(char chr1, char chr2);
+ 
++void xxx_workspace_changed(void);
++
+ #ifdef XXX_CODE_FOR_SERVER_C
++static int xxx_write_current_workspace_index_to_file(void *data)
++{
++	__auto_type server = (const struct server *)data;
++
++	if (server->workspace_current == NULL) {
++		return 0;
++	}
++	__auto_type current = server->workspace_current;
++	struct workspace *target;
++
++	unsigned char c = 1;
++	wl_list_for_each(target, &server->workspaces, link) {
++		if (target == current) {
++			if (c > 9) c = '0';
++			else c += '0';
++			int fd = xxx_open_f4w('w','s');
++			write(fd, &c, 1);
++			close(fd);
++			break;
++		}
++		c++;
++	}
++	return 0;
++}
++
++static struct wl_event_source *_xxx_ws_index_timer;
++void xxx_workspace_changed(void)
++{
++	// slow enough for key repeat and mouse wheel //
++	wl_event_source_timer_update(_xxx_ws_index_timer, 52);
++}
+ 
+ static char _xxx_fn_buf[64];
+ static int _xxx_fn_pos;
+@@ -56,6 +89,11 @@ static void xxx_init(struct server *server, const char *socket)
+ 
+ 	wl_event_loop_add_signal(server->wl_event_loop, SIGWINCH,
+ 				 xxx_handle_sigwinch, server);
++
++	_xxx_ws_index_timer = wl_event_loop_add_timer(
++		server->wl_event_loop,
++		xxx_write_current_workspace_index_to_file, server);
++	xxx_write_current_workspace_index_to_file(server);
+ }
+ #endif // XXX_CODE_FOR_SERVER_C
+ 
+diff --git src/workspaces.c src/workspaces.c
+index 245757e0..ad29ac8e 100644
+--- src/workspaces.c
++++ src/workspaces.c
+@@ -19,6 +19,8 @@
+ #include "workspaces.h"
+ #include "xwayland.h"
+ 
++#include "xxx/xxx-entry.ch"
++
+ /* Internal helpers */
+ static size_t
+ parse_workspace_index(const char *name)
+@@ -333,6 +335,8 @@ workspaces_switch_to(struct workspace *target, bool update_focus)
+ 
+ 	/* Ensure that only currently visible fullscreen windows hide the top layer */
+ 	desktop_update_top_layer_visiblity(server);
++
++	xxx_workspace_changed();
+ }
+ 
+ void

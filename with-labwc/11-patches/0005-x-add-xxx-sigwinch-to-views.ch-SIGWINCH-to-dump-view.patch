@@ -1,0 +1,164 @@
+From 138ae0916931267f5c7400d3482df6c3f80775c4 Mon Sep 17 00:00:00 2001
+From: Tomi Ollila <tomi.ollila@iki.fi>
+Date: Mon, 25 Mar 2024 16:38:25 +0200
+Subject: [PATCH] x add xxx-sigwinch-to-views.ch - SIGWINCH to dump views to a
+ file
+
+---
+ include/xxx/xxx-sigwinch-to-views.ch | 107 +++++++++++++++++++++++++++
+ src/osd-field.c                      |   4 +
+ src/server.c                         |   5 ++
+ 3 files changed, 116 insertions(+)
+ create mode 100644 include/xxx/xxx-sigwinch-to-views.ch
+
+diff --git a/include/xxx/xxx-sigwinch-to-views.ch b/include/xxx/xxx-sigwinch-to-views.ch
+new file mode 100644
+index 00000000..023a55c2
+--- /dev/null
++++ b/include/xxx/xxx-sigwinch-to-views.ch
+@@ -0,0 +1,107 @@
++// -*- mode: c; c-file-style: "linux" -*- //
++
++// temporary hacks, not expected to be around too long(*)
++// and I am too lazy to follow the style to full extent
++// (*) a day, week, and even a year, seem to be too short ;/
++
++#ifdef XXX_SIGWINCH_TO_VIEWS_CH
++#error __FILE__ included too often (twice) during one compilation unit
++#endif
++#define XXX_SIGWINCH_TO_VIEWS_CH 1
++
++// add includes on demand...
++
++#ifdef XXX_CODE_FOR_SERVER_C
++#include <fcntl.h>
++#endif
++
++int xxx_open_f4w(char chr1, char chr2);
++
++#ifdef XXX_CODE_FOR_SERVER_C
++
++static char xxx_fn_buf[64];
++static int xxx_fn_pos;
++
++static void xxx_fill_fn_pfx(struct server *server, const char *socket)
++{
++	const char * sn = strrchr(socket, '/');
++	sn = sn? sn + 1: socket;
++	xxx_fn_pos = snprintf(xxx_fn_buf, sizeof xxx_fn_buf, "%s/%s,XX,",
++			      getenv("XDG_RUNTIME_DIR"), socket);
++	//assert((size_t)xxx_fn_pos < sizeof xxx_fn_buf - 2);
++	xxx_fn_pos -= 3;
++}
++
++int xxx_open_f4w(char chr1, char chr2)
++{
++	xxx_fn_buf[xxx_fn_pos + 0] = chr1;
++	xxx_fn_buf[xxx_fn_pos + 1] = chr2;
++	return open(xxx_fn_buf, O_WRONLY|O_CREAT|O_TRUNC|O_NONBLOCK, 0644);
++}
++#endif // XXX_CODE_FOR_SERVER_C
++
++
++void xxx_dump_views(const struct server * server);
++
++#ifdef XXX_CODE_FOR_SERVER_C
++static int xxx_handle_sigwinch(int signal, void *data)
++{
++	xxx_dump_views((const struct server *)data);
++	return 0;
++}
++
++static void xxx_sigwinch_to_views_init(struct server *server,
++				       const char *socket)
++{
++	xxx_fill_fn_pfx(server, socket);
++
++	wl_event_loop_add_signal(server->wl_event_loop, SIGWINCH,
++				 xxx_handle_sigwinch, server);
++}
++#endif // XXX_CODE_FOR_SERVER_C
++
++
++#ifdef XXX_CODE_FOR_OSD_FIELD_C
++// included at the end of osd-field.c and refers static functions there //
++void xxx_dump_views(const struct server * server)
++{
++	int fd = xxx_open_f4w('v','d');
++	char buf[4096];
++	unsigned int bp = 0;
++	struct view *view;
++	wl_list_for_each(view, &server->views, link) {
++		if (! view_is_focusable(view)) continue;
++
++		__auto_type current = view->workspace;
++		struct workspace *target;
++
++		unsigned char c = 1;
++		wl_list_for_each(target, &server->workspaces.all, link) {
++			if (target == current) break;
++			c++;
++		}
++		int l = snprintf(buf + bp, sizeof buf - bp,
++				 "%u %s %s\n", c,
++				 get_app_id_or_class(view, /*trim*/ true),
++				 get_title_if_different(view));
++		bp += l;
++		if (bp > sizeof buf - 512) {
++			if (bp >= sizeof buf) { //unlikely//
++				bp = sizeof buf;
++				buf[bp - 1] = '\n';
++			}
++			write(fd, buf, bp);
++			bp = 0;
++		}
++	}
++	//if (bp > 0) { write(fd, buf, bp); }
++	time_t t = time(NULL);
++	struct tm * tm = localtime(&t);
++	size_t l = strftime(buf + bp, sizeof buf - bp,
++			    "t %Y-%m-%d (%a) %H:%M:%S %z - labwc ", tm);
++	// v works as long as LABWC_VERSION is string literal... v //
++	memcpy(buf + bp + l, (LABWC_VERSION "\n"), sizeof LABWC_VERSION);
++	write(fd, buf, bp + l + sizeof LABWC_VERSION);
++	close(fd);
++}
++#endif // XXX_CODE_FOR_OSD_FIELD_C
+diff --git a/src/osd-field.c b/src/osd-field.c
+index 7465d267..89c89062 100644
+--- a/src/osd-field.c
++++ b/src/osd-field.c
+@@ -388,3 +388,7 @@ osd_field_free(struct window_switcher_field *field)
+ 	zfree(field->format);
+ 	zfree(field);
+ }
++
++#define XXX_CODE_FOR_OSD_FIELD_C 1
++#include "xxx/xxx-sigwinch-to-views.ch"
++#undef XXX_CODE_FOR_OSD_FIELD_C
+diff --git a/src/server.c b/src/server.c
+index 9e87655e..8ea1ec88 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -51,6 +51,10 @@
+ #include "workspaces.h"
+ #include "xwayland.h"
+ 
++#define XXX_CODE_FOR_SERVER_C 1
++#include "xxx/xxx-sigwinch-to-views.ch"
++#undef XXX_CODE_FOR_SERVER_C
++
+ #define LAB_WLR_COMPOSITOR_VERSION 5
+ #define LAB_WLR_FRACTIONAL_SCALE_V1_VERSION 1
+ #define LAB_WLR_LINUX_DMABUF_VERSION 4
+@@ -737,6 +741,7 @@ server_start(struct server *server)
+ 	} else {
+ 		wlr_log(WLR_DEBUG, "WAYLAND_DISPLAY=%s", socket);
+ 	}
++	xxx_sigwinch_to_views_init(server, socket);
+ }
+ 
+ void
+-- 
+2.49.0
+

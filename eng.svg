@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- glyph paths from Cantarell font licenced under SIL OFL 1.1 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="110"
+     stroke-width="25">
+ <defs>
+  <linearGradient id="g">
+   <stop offset="5%" stop-color="#174" />
+   <stop offset="33%" stop-color="#db1" />
+   <stop offset="66%" stop-color="#1ae" />
+   <stop offset="95%" stop-color="#c61" />
+  </linearGradient>
+  <clipPath id="e">
+   <path d="M 0 55 Q 0 0 110 0 T 220 55 T 110 110 T 0 55 z"/>
+  </clipPath>
+ </defs>
+ <g clip-path="url(#e)">
+  <rect width="220" height="110" fill="url(#g)"/>
+  <g fill="#069" stroke="#000" transform="translate(15 90) scale(0.1 -0.1)">
+   <path d="M92 0v694h436v-72h-353v-227h326v-72h-326v-251h353v-72h-436z"/>
+  </g>
+  <g fill="#ddd" stroke="#000" transform="translate(70 90) scale(0.1 -0.1)">
+   <path d="M92 0v694h95l393 -583v583h78v-694h-92l-396 583v-583h-78z"/>
+  </g>
+  <g fill="#d11" stroke="#000" transform="translate(139 90) scale(0.1 -0.1)">
+   <path d="M402 -9c-210 0 -348 139 -348 351c0 218 145 361 364 361c76 0 149
+            -16 210 -46l-24 -64c-61 23 -134 37 -197 37c-169 0 -268 -100 -268
+            -273c0 -178 108 -293 275 -293c55 0 109 13 158
+            38v194h-197v72h280v-294c-70 -55 -157 -83 -253 -83z"/>
+  </g>
+ </g>
+</svg>

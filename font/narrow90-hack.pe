@@ -1,0 +1,32 @@
+#!/usr/bin/env fontforge
+
+// name: narrow90-hack.pe; license: unlicense
+
+// this was the first I did (embolden.pe). left for reference
+// later versions use fonts.conf to do the emboldening, at rasterizer time
+
+// so, this version is not used anymore ! (in my configurations)
+
+pfx = "Emb90" // fonts.conf to be used to embolden
+
+while ($argc > 1)
+    Open($1)
+    Print($familyname, GetFontBoundingBox())
+    SelectAll()
+
+    ChangeWeight(60)
+
+    // x' = 90x + 0y + 0, y' = 0x + 100y + 0
+    Transform(90, 0,  0, 100,  0, 0) // narrow by 90/100
+
+    foreach
+      i = GlyphInfo("Width") //; Print(i)
+      if (i > 0 && i < 1244) SetWidth(1244); endif // XXX works for Hack-*
+    endloop
+    Print(pfx + $familyname, GetFontBoundingBox())
+    SetFontNames("", pfx + $familyname)
+    //Save(pfx + $1:r:t + ".std")
+    Generate(pfx + $1:t)
+    Close()
+    shift
+endloop

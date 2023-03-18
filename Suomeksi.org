@@ -1,0 +1,43 @@
+#+STARTUP: showall
+#+TOC: headlines 1
+
+# huom: kokeilin '#+BEGIN_EXPORT html':ia - ei toiminut (forgessa)
+# allaoleva voi hajota milloin tahansa...
+
+#+BEGIN_HTML
+<p align="center">
+ <img src="ruudut.svg" align="left" height="48" width="80"/>
+ <a href="ReadMe.org"><img src="eng.svg" align="right" height="48" width="96"/></a>
+ <h1>Ruudut</h1>
+</p>
+#+END_HTML
+
+Joukko tietokoneohjelmia ja -tiedostoja osana (minimaalista)
+wayland-työpöytäympäristöä.
+
++ [[font/Suomeksi.org][font]] :: paksunnettu (ja kavennettu) versio kirjaintyypistä /Hack/
+
++ [[kbd/Suomeksi.org][kbd]] :: näppäinkartta /fi-ohjelmoija/ - jotta koodin naputus olisi helpompaa
+
++ [[tools]] :: apuohjelmia työpöytäympäristön kehitykseen ja käyttöön
+
+Wa -etuliitteellä Wayland-sovellukset omaksi listakseen:
+
++ [[wa-ootappa]] :: punainen ajastin näytön keskellä
+
++ [[wa-tiili]] :: palikka ruudun reunassa näyttäen työpöydän, ajan ja akun tason
+
+With -etuliitteellä hakemistot joissa säätöjä muihin sovelluksiin:
+
++ [[with-labwc]] :: muutoksia jotka tekevät labwc:n sopimaan paremmin minun käyttöön
+
++ [[with-urxvt]] :: tiedostoja urxvt-käyttöä varten
+
++ [[with-xxdiff/qt3]] :: muutoksia jotka tekevät xxdiffin (qt3 version) sopimaan paremmin miulle
+
+Jatkoa "yksittäisille" (ascii-järjestyksessä):
+
++ [[wp]] :: Wayland-protokollatiedostoja joita on käytetty ennen - ja nyt - täällä
+
+# ei muista (jonne?) org-modea, joten välillä (fundamental-mode)
+# ja sit taas kun muistaa - tai kattoo, niin (org-mode)

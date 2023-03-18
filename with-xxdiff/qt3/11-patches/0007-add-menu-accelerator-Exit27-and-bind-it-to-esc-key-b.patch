@@ -1,0 +1,94 @@
+From 45ded8c63fa8a599b5845a279567cd7676fa8afc Mon Sep 17 00:00:00 2001
+From: Tomi Ollila <tomi.ollila@iki.fi>
+Date: Sun, 20 Oct 2024 19:28:48 +0300
+Subject: [PATCH 7/7] + add (menu) accelerator 'Exit27' and bind it to esc key
+ by default
+
+---
+ src/app.cpp       | 11 +++++++++++
+ src/app.h         |  1 +
+ src/resParser.cpp |  1 +
+ src/resources.cpp |  1 +
+ src/resources.h   |  1 +
+ 5 files changed, 15 insertions(+)
+
+diff --git a/src/app.cpp b/src/app.cpp
+index 70d5a7d..ae3992f 100644
+--- a/src/app.cpp
++++ b/src/app.cpp
+@@ -1314,6 +1314,10 @@ void XxApp::createMenus()
+          "Exit", this, SLOT(quit()),
+          _resources->getAccelerator( ACCEL_EXIT )
+       );
++      fileMenu->insertItem(
++         "Exit 27", this, SLOT(quit27()),
++         _resources->getAccelerator( ACCEL_EXIT27 )
++      );
+    }
+    else {
+ 
+@@ -3472,6 +3476,13 @@ void XxApp::quit()
+    exit( _returnValue );
+ }
+ 
++void XxApp::quit27()
++{
++   _returnValue = 27;
++   exit( 27 );
++}
++
++
+ //------------------------------------------------------------------------------
+ //
+ void XxApp::exit( int retcode, const char* decisionString )
+diff --git a/src/app.h b/src/app.h
+index f720c5e..e1bff05 100644
+--- a/src/app.h
++++ b/src/app.h
+@@ -213,6 +213,7 @@ public slots:
+    void editRight();
+    void saveOptions();
+    void quit();
++   void quit27();
+    void search();
+    void searchForward();
+    void searchBackward();
+diff --git a/src/resParser.cpp b/src/resParser.cpp
+index 9775ea4..1f08fb4 100644
+--- a/src/resParser.cpp
++++ b/src/resParser.cpp
+@@ -281,6 +281,7 @@ diff program." }
+ 
+ StringToken accelList[] = {
+    { "Exit", ACCEL_EXIT, 0 },
++   { "Exit27", ACCEL_EXIT27, 0 },
+    { "ExitAccept", ACCEL_EXIT_ACCEPT, 0 },
+    { "ExitMerged", ACCEL_EXIT_MERGED, 0 },
+    { "ExitReject", ACCEL_EXIT_REJECT, 0 },
+diff --git a/src/resources.cpp b/src/resources.cpp
+index 837ca66..27312aa 100644
+--- a/src/resources.cpp
++++ b/src/resources.cpp
+@@ -112,6 +112,7 @@ void XxResources::initializeOriginalXdiff()
+    }
+    
+    _accelerators[ ACCEL_EXIT ] = Qt::CTRL | Qt::Key_Q;
++   _accelerators[ ACCEL_EXIT27 ] = Qt::Key_Escape;
+    _accelerators[ ACCEL_EXIT_ACCEPT ] = Qt::Key_A;
+    _accelerators[ ACCEL_EXIT_MERGED ] = Qt::Key_M;
+    _accelerators[ ACCEL_EXIT_REJECT ] = Qt::Key_R;
+diff --git a/src/resources.h b/src/resources.h
+index 1576a54..a4a606d 100644
+--- a/src/resources.h
++++ b/src/resources.h
+@@ -112,6 +112,7 @@ enum XxShowOpt {
+ // Accelerators.
+ enum XxAccel {
+    ACCEL_EXIT,
++   ACCEL_EXIT27,
+    ACCEL_EXIT_ACCEPT,
+    ACCEL_EXIT_MERGED,
+    ACCEL_EXIT_REJECT,
+-- 
+2.49.0
+

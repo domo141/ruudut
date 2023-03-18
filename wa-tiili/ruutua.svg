@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" stroke-width="1">
+  <defs>
+    <pattern id="Pat" x="0" y="0" width="0.015" height="0.025">
+      <rect x="0" y="0" width="12" height="12" fill="#125" />
+      <rect x="0" y="0" width="3" height="3" fill="#666" />
+      <rect x="3" y="3" width="3" height="3" fill="#666" />
+      <rect x="9" y="6" width="3" height="3" fill="#666" />
+      <rect x="6" y="9" width="3" height="3" fill="#666" />
+    </pattern>
+  </defs>
+  <rect width="800" height="480" fill="url(#Pat)" stroke="black" />
+
+  <rect width="800" height="32" fill="#000" />
+  <rect width="32" height="480" fill="#000" x="768" />
+
+  <rect width="550" height="448" y="32" fill="#333" />
+  <rect width="550" height="30" y="32" fill="#800" />
+
+  <line x1="0" y1="32.5" x2="550.5" y2="32.5" stroke="#fff" />
+  <line x1="0" y1="62.5" x2="550.5" y2="62.5" stroke="#fff" />
+  <line x1="550.5" y1="32.5" x2="550.5" y2="480" stroke="#fff" />
+  <line x1="34" y1="2" x2="34" y2="54"/>
+  <line x1="34" y1="2" x2="34" y2="54"/>
+
+  <rect width="404" height="24" x="205" y="30" fill="#000" />
+
+  <g transform="translate(207 32) scale(0.1 0.1)" fill="none"
+     stroke="#fff" stroke-width="26">
+     <path d="M 100 0 m 10 54 l 40 -40 l 10 0 l 0 161 m -53 0 l 106 0" />
+
+     <path d="M 350 0 m 13 41 a 47 47 0 1 1 76 53 l -70 75 l 0 6 l 95 0" />
+     <path d="M 500 0 m 10 54 l 40 -40 l 10 0 l 0 161 m -53 0 l 106 0" />
+
+     <path d="M 800 0 m 14 190 l 0 -182 l 45 100 l 45 -100 l 0 182" />
+     <g transform="translate(960 0)">
+       <ellipse cx="54" cy="127" rx="40" ry="50" />
+     </g>
+     <path d="M 1100 0 m 14 63 l 5 27 l 0 100 m 0 -76 a 6 6 0 0 1 75 0 l 0 76" />
+
+     <path d="M 1400 0 m 10 54 l 40 -40 l 10 0 l 0 161 m -53 0 l 106 0" />
+     <path d="M 1550 0 m 16 59 a 3 3 0 0 1 85 0 l 0 74 a 3 3 0 0 1 -85 0 l 0 -74" />
+     <g transform="translate(1710,0)">
+       <circle cx="22" cy="75" r="19" fill="#fff" stroke="none" />
+       <circle cx="22" cy="145" r="19" fill="#fff" stroke="none" />
+     </g>
+     <path d="M 1790 0 m 13 41 a 47 47 0 1 1 76 53 l -70 75 l 0 6 l 95 0" />
+     <path d="M 1940 0 m 14 130 a 45 47 0 1 1 0 1 l 0 -60 a 52 52 0 0 1 90 -40" />
+     <g transform="translate(2100,0)">
+       <circle cx="22" cy="75" r="19" fill="#fff" stroke="none" />
+       <circle cx="22" cy="145" r="19" fill="#fff" stroke="none" />
+     </g>
+     <path d="M 2180 0 m 13 34 a 44 39 0 1 1 46 58 l -9 0 m 9 1 a 45 42 0 1 1 -45 52" />
+     <path d="M 2330 0 m 104 14 l -80 0 l 0 68 l 10 0 a 50 50 0 1 1 -22 70" />
+
+     <path d="M 2630 0 m 13 77 l 30 100 l 1 0 l 20 -50 l 1 0 l 20 50 l 1 0 l 30 -100" />
+     <path d="M 2790 0 m 10 54 l 40 -40 l 10 0 l 0 161 m -53 0 l 106 0" />
+     <path d="M 2930 0 m 1 14 l 102 0 l 0 5 l -70 167" />
+
+     <path d="M 3230 0 m 1 110 l 100 0 m -50 -50 l 0 100" />
+     <path d="M 3380 0 m 104 62 a 45 47 0 1 1 0 -1 l 0 70 a 52 51 0 0 1 -90 30" />
+     <path d="M 3530 0 m 104 62 a 45 47 0 1 1 0 -1 l 0 70 a 52 51 0 0 1 -90 30" />
+     <g transform="translate(3690,0)">
+       <circle cx="22" cy="165" r="19" fill="#fff" stroke="none" />
+     </g>
+     <path d="M 3770 0 m 104 62 a 45 47 0 1 1 0 -1 l 0 70 a 52 51 0 0 1 -90 30" />
+  </g>
+  <g transform="rotate(70)">
+    <path d="M 380 -520 l 15 -7 l -3 5 l 8 0 l 0 3 l -8 0 l 3 5 z"
+          stroke="#fff" stroke-width="1" />
+  </g>
+</svg>
