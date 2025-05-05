@@ -53,7 +53,7 @@ help:   # helep
 	printf %s\\n '' 'Note: recipes may "eval" code given in args...'
 
 XX_BD = bare-xxdiff-qt3
-XX_WT = wt-1-9ee
+XX_WT = wt-1-1f4
 
 # to define, and not to take from env (expect url= from command line)
 url =
@@ -61,11 +61,11 @@ ifneq (,$(findstring ',$(url))) #'
 $(error url "$(url)" contains "'" char(s))
 endif
 
-#commit 9ee2fd4e ref'erred as "origin/qt3" in origin (2024-01-20)
-COMMIT = 9ee2fd4e7a096b1e1ab4367ab60328283a1c77a9
+#commit 1f4a9343 ref'erred as "origin/qt3" in origin (2025-05-05)
+COMMIT = 1f4a934317cb4049766666ef09b7d01b3ad9530b
 
 .PHONY: clone
-clone:  # clone xxdiff repo - commit 9ee2fd4e7 (branch: qt3), and checkout wt
+clone:  # clone xxdiff repo - commit 1f4a93431 (branch: qt3), and checkout wt
 	$(sh)
 	td=$(XX_BD)
 	test -d $(XX_BD) && die "'./$(XX_BD)/' exists - cloned already? (rewt?)"
@@ -113,7 +113,7 @@ build:  # build, tries to use pkg-config to find path to QTDIR and QMAKE
 #	#gd=`git describe --all --match '*qt3' HEAD`; gd=$${gd##*/}
 	v () {  set -- `git log --abbrev=7 --format=%h $(COMMIT)..`
 		test $$# = 0 && die 'apply?'
-		gd=$$#-g9ee-$$1
+		gd=$$#-g1f4-$$1
 	}; v
 	sed -i '/XX_VERSION/ s/N`/N`'"-$$gd/" Makefile
 	test -e version.h && rm version.h

@@ -1,7 +1,7 @@
-From 45ded8c63fa8a599b5845a279567cd7676fa8afc Mon Sep 17 00:00:00 2001
+From 3a8d95917deb30dfe7f79c55b110a3b1c4159dcf Mon Sep 17 00:00:00 2001
 From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Sun, 20 Oct 2024 19:28:48 +0300
-Subject: [PATCH 7/7] + add (menu) accelerator 'Exit27' and bind it to esc key
+Subject: [PATCH 2/2] + add (menu) accelerator 'Exit27' and bind it to esc key
  by default
 
 ---
