@@ -332,10 +332,10 @@ static_assert (sizeof(long) >= 8);
     return neg? -i_val: i_val;
 }
 
-/* a workspace var */
-static char wsn[2];
-/* one enter/leave */
-static char eln[2];
+/* workspace */
+static volatile char wsn = -1;
+/* enter/leave */
+static volatile char eln = -1;
 
 static inline void draw_border(char f)
 {
@@ -355,18 +355,21 @@ static bool draw_buffer(void)
 
     /* latest addition... */
     bool updated;
-    if (eln[0] != eln[1]) {
-	draw_border(eln[0]);
+    if (eln >= 0) {
+	draw_border(eln);
 #define draw_border _draw_border_do_not_call_again_
-	eln[1] = eln[0];
+	eln = -1;
 	updated = 1;
     }
     else updated = 0;
 
-    if (wsn[0] != wsn[1]) {
-	unsigned int ws = wsn[0] - '0'; if (ws > 9) ws = 0;
-	draw_txti(nums[ws], LOC_WS);
-	wsn[1] = wsn[0];
+    if (wsn >= 0) {
+	//unsigned int ws = wsn; if (ws > 9) ws = 0;
+//#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Wall" // "-Wchar-subscripts"
+	draw_txti(nums[+wsn], LOC_WS);
+//#pragma GCC diagnostic pop
+	wsn = -1;
 	// note to self: damage-x -- damage-width to retval (or x1,x2)
 	if (ct == pt) return 1;
 	// lisää vihje wev(1):sta kun lisää sen pointer-jutukkeen...
@@ -546,7 +549,7 @@ static void wl_pointer_enter(void * UU(data),
 			     wl_fixed_t UU(surface_x),
 			     wl_fixed_t UU(surface_y))
 {
-    eln[0] = 1; //DP("enter %d %d\n", surface_x_unused, surface_y_unused);
+    eln = 1; //DP("enter %d %d\n", surface_x_unused, surface_y_unused);
 }
 
 static void wl_pointer_leave(void * UU(data),
@@ -554,7 +557,7 @@ static void wl_pointer_leave(void * UU(data),
 			     uint32_t UU(serial),
 			     struct wl_surface * UU(surface))
 {
-    eln[0] = 0; //DP("leave\n");
+    eln = 0; //DP("leave\n");
 }
 
 struct wl_pointer_listener wl_pointer_listener = {
@@ -590,7 +593,7 @@ static void xxx_workspace_index_me_workspace_index(
     void * UU(data), struct zxxx_workspace_index_me_v3 * UU(xxx_wsp_index_me),
     uint32_t index)
 {
-    wsn[0] = (index < 10? index: 0) + '0';
+    wsn = index < 10? index: 0;
 }
 
 const struct zxxx_workspace_index_me_v3_listener
