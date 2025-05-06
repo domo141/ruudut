@@ -332,8 +332,7 @@ static_assert (sizeof(long) >= 8);
     return neg? -i_val: i_val;
 }
 
-/* 2 workspace vars */
-static char wsfile[64];
+/* a workspace var */
 static char wsn[2];
 /* one enter/leave */
 static char eln[2];
@@ -664,20 +663,6 @@ static int next_tout(void)
 
 int main(int argc, char ** argv)
 {
-    if ((ulong)snprintf(wsfile, sizeof wsfile, "%s/%s,ws,",
-			getenv("XDG_RUNTIME_DIR"), getenv("WAYLAND_DISPLAY"))
-	/**/ >= sizeof wsfile)
-	exit(111);
-#if 0
-    int wsfd = open(wsfile, O_RDONLY|O_NONBLOCK, 0);
-    if (wsfd >= 0) {
-	read(wsfd, &wsn, 1);
-	close(wsfd);
-	unlink(wsfile);
-	mkfifo(wsfile, 0644);
-	wsfd = open(wsfile, O_RDONLY|O_NONBLOCK, 0);
-    }
-#endif
     open_batfile();
 
     struct wl_display * wl_display = wl_display_connect(NULL);
@@ -736,30 +721,18 @@ int main(int argc, char ** argv)
     while (wl_display_dispatch(wl_display) >= 0 && wl_buffer == NULL) {
 	// wait for xdg_surface_configure() to create wl_buffer...
     }
-    struct pollfd pfds[2];
+    struct pollfd pfds[1];
     pfds[0].fd = wl_display_get_fd(wl_display);
     pfds[0].events = POLLIN;
-    const int wsfd = -1;
-    pfds[1].fd = wsfd;
-    pfds[1].events = POLLIN;
 
     next_sec = time(NULL) + 4;
     next_sec = next_sec - next_sec % 5;
     wl_display_flush(wl_display);  // expect data fits to (100K+) socket buf)
     while (1) {
 	int tout = next_tout();
-	int nfds = poll(pfds, 2, tout);
+	int nfds = poll(pfds, 1, tout);
 	//DP("xxx %d %d %d\n", tout, next_sec, nfds);
 	if (nfds) {
-	    if (pfds[1].revents) {
-		read(wsfd, &wsn, 1);
-		close(wsfd);
-		int nwsfd = open(wsfile, O_RDONLY|O_NONBLOCK, 0);
-		if (nwsfd != wsfd) {
-		    dup2(nwsfd, wsfd);
-		    close(nwsfd);
-		}
-	    }
 	    if (pfds[0].revents) {
 		// fixme: check failure, print it
 		if (wl_display_dispatch(wl_display) < 0) break;
