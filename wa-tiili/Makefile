@@ -24,7 +24,7 @@ help:
 	$(info : other, look inside $(MAKEFILE_LIST))
 	$(info )
 
-all: $(BD)/tiili $(BD)/tiiluus
+all: $(BD)/tiili
 
 CC = cc
 #CFLAGS = -ggdb -DUSE_WLR_LAYER_SHELL=$(USE_WLR_LAYER_SHELL)
@@ -43,16 +43,10 @@ wl-protocols-e.h = $(wl-protocols.h)
 wl-protocols-i.c = $(wl-protocols.c)
 wl-protocols-e.c = $(wl-protocols.c)
 
-wl-protocols-i.h += $(GD)/xxx-workspace-index-me-unstable-v3-client-protocol.h
-wl-protocols-i.c += $(GD)/xxx-workspace-index-me-unstable-v3-protocol.c
-
 wl-protocols-e.h += $(GD)/ext-workspace-v1-client-protocol.h
 wl-protocols-e.c += $(GD)/ext-workspace-v1-protocol.c
 
-$(BD)/tiili: tiili.c $(wl-protocols-i.h) $(wl-protocols-i.c) $(GD)/txts.ch
-	$(CC) $(CFLAGS) -o $@ $< $(wl-protocols-i.c) -lwayland-client -lrt
-
-$(BD)/tiiluus: tiiluus.c $(wl-protocols-e.h) $(wl-protocols-e.c) $(GD)/txts.ch
+$(BD)/tiili: tiili.c $(wl-protocols-e.h) $(wl-protocols-e.c) $(GD)/txts.ch
 	$(CC) $(CFLAGS) -o $@ $< $(wl-protocols-e.c) -lwayland-client -lrt
 
 $(BD):
@@ -61,11 +55,8 @@ $(BD):
 $(GD): | $(BD)
 	mkdir $@
 
-#xdg-shell.xml = /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml
-#xdg-shell-client-protocol.h: $(xdg-shell.xml)
-#	wayland-scanner client-header $< $@
-#xdg-shell-protocol.c: $(xdg-shell.xml)
-#	wayland-scanner private-code $< $@
+#wl-protocols-e.h += $(GD)/xdg-shell-client-protocol.h
+#wl-protocols-e.c += $(GD)/xdg-shell-protocol.c
 
 vpath %.xml /usr/share/wayland-protocols/stable/xdg-shell/
 vpath %.xml /usr/share/wayland-protocols/staging/ext-workspace/

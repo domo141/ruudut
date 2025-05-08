@@ -29,7 +29,7 @@
 #endif
 #include "xdg-shell-client-protocol.h"
 
-#include "xxx-workspace-index-me-unstable-v3-client-protocol.h"
+#include "ext-workspace-v1-client-protocol.h"
 #pragma GCC diagnostic pop
 
 #if 1
@@ -587,18 +587,139 @@ const struct wl_seat_listener wl_seat_listener = {
     .name = noop
 };
 
-// xxx_workspace_index_me //
+// ext_workspace //
 
-static void xxx_workspace_index_me_workspace_index(
-    void * UU(data), struct zxxx_workspace_index_me_v3 * UU(xxx_wsp_index_me),
-    uint32_t index)
+#if 0
+const struct ext_workspace_group_handle_v1_listener
+workspace_group_handle_listener = {
+    .capabilities = noop,
+    .output_enter = noop,
+    .output_leave = noop,
+    .workspace_enter = noop,
+    .workspace_leave = noop,
+    .removed = noop
+};
+
+static void ext_workspace_group(
+    void * UU(data),
+    struct ext_workspace_manager_v1 *ext_workspace_manager,
+    struct ext_workspace_group_handle_v1 *workspace_group)
 {
-    wsn = index < 10? index: 0;
+    //DP("%s %p %p\n", __func__, VP ext_workspace_manager, VP workspace_group);
+    ext_workspace_group_handle_v1_add_listener(
+	workspace_group, &workspace_group_handle_listener, NULL);
+}
+#endif
+
+static struct ext_workspace_handle_v1 *workspazes[9];
+
+#if 0
+static void ext_workspace_id(
+    void * UU(data),
+    struct ext_workspace_handle_v1 *ext_workspace_handle,
+    const char *id)
+{
+    DP("%s %p %s\n", __func__, VP ext_workspace_handle, id);
+}
+#endif
+
+/* .capabilities is used just to registed workspaces (if .state
+ * did not get it first) -- so that .state can only care about
+ * the 'active' cases */
+static void ext_workspace_capabilities(
+    void * UU(data),
+    struct ext_workspace_handle_v1 *ext_workspace_handle,
+    uint32_t UU(capabilities))
+{
+    //DP("%s %p %u\n", __func__, VP ext_workspace_handle, capabilities_unused);
+
+    for (unsigned i = 0; i < sizeof workspazes / sizeof workspazes[0]; i++) {
+	if (workspazes[i] == ext_workspace_handle) {
+	    return;
+	}
+	if (workspazes[i] == NULL) {
+	    workspazes[i] = ext_workspace_handle;
+	    return;
+	}
+    }
 }
 
-const struct zxxx_workspace_index_me_v3_listener
-zxxx_workspace_index_me_v3_listener = {
-    .workspace_index = xxx_workspace_index_me_workspace_index
+
+static void ext_workspace_state(
+    void * UU(data),
+    struct ext_workspace_handle_v1 *ext_workspace_handle,
+    uint32_t state)
+{
+    //DP("%s %p %u\n", __func__, VP ext_workspace_handle, state);
+    if ((state & EXT_WORKSPACE_HANDLE_V1_STATE_ACTIVE) == 0)
+	return;
+    static_assert(sizeof workspazes / sizeof workspazes[0] <= 9);
+    for (unsigned i = 0; i < sizeof workspazes / sizeof workspazes[0]; i++) {
+	if (workspazes[i] == ext_workspace_handle) {
+	    wsn = i + 1;
+	    return;
+	}
+	// else //
+	if (workspazes[i] == NULL) {
+	    workspazes[i] = ext_workspace_handle;
+	    wsn = i + 1;
+	    return;
+	}
+    }
+    // else //
+    wsn = 0;
+}
+
+static void ext_workspace_removed(
+    void * UU(data),
+    struct ext_workspace_handle_v1 *ext_workspace_handle)
+{
+    // so far never called (nor tested separately so far...)
+    //DP("%s %p\n", __func__, VP ext_workspace_handle);
+    unsigned i;
+    for (i = 0; i < sizeof workspazes / sizeof workspazes[0]; i++) {
+	if (workspazes[i] == ext_workspace_handle) break;
+    }
+    while (++i < sizeof workspazes / sizeof workspazes[0]) {
+	if (workspazes[i] == NULL) break;
+	workspazes[i - 1] = workspazes[i];
+    }
+    workspazes[i - 1] = NULL;
+}
+
+const struct ext_workspace_handle_v1_listener workspace_handle_listener = {
+    .id = noop, //ext_workspace_id,
+    .name = noop, //ext_workspace_name,
+    .coordinates = noop,
+    .state = ext_workspace_state,
+    .capabilities = ext_workspace_capabilities,
+    .removed = ext_workspace_removed
+};
+
+static void ext_workspace(
+    void * UU(data),
+    struct ext_workspace_manager_v1 UU(*ext_workspace_manager),
+    struct ext_workspace_handle_v1 *workspace)
+{
+    //DP("%s %p %p\n", __func__, VP ext_workspace_manager_unused, VP workspace);
+    ext_workspace_handle_v1_add_listener(
+	workspace, &workspace_handle_listener, NULL);
+}
+
+#if 0
+static void ext_workspace_events_done(
+    void * UU(data),
+    struct ext_workspace_manager_v1 *ext_workspace_manager_v1)
+{
+    DP("%s %p\n", __func__, VP ext_workspace_manager_v1);
+}
+#endif
+
+const struct ext_workspace_manager_v1_listener ext_workspace_listener = {
+    .workspace_group = noop, // ext_workspace_group,
+    .workspace = ext_workspace,
+    .done = noop, // ext_workspace_events_done,
+    .finished = noop // should we care ? //
 };
 
 // wayland registry //
@@ -636,13 +757,13 @@ static void wl_registry_global(void * UU(data),
 				       &zwlr_layer_shell_v1_interface, 4);
     }
 #endif
-    else if (strcmp(interface, zxxx_workspace_index_me_v3_interface.name) == 0){
-	struct zxxx_workspace_index_me_v3 * xxx_workspace_index_me
+    else if (strcmp(interface, ext_workspace_manager_v1_interface.name) == 0) {
+	struct ext_workspace_manager_v1 * workspace_manager
 	    = wl_registry_bind(wl_registry, name,
-			       &zxxx_workspace_index_me_v3_interface, 1);
-	zxxx_workspace_index_me_v3_add_listener(xxx_workspace_index_me,
-				&zxxx_workspace_index_me_v3_listener, NULL);
-	zxxx_workspace_index_me_v3_workspace_index_me(xxx_workspace_index_me);
+			       &ext_workspace_manager_v1_interface, 1);
+
+	ext_workspace_manager_v1_add_listener(workspace_manager,
+					      &ext_workspace_listener, NULL);
     }
 }
 

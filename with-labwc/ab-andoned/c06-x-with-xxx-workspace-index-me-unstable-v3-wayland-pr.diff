@@ -1,10 +1,6 @@
-From 1bd429afe9d492bf5ec8838e44a9dd5c6777f2c0 Mon Sep 17 00:00:00 2001
-From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Mon, 29 Apr 2024 19:35:21 +0300
-Subject: [PATCH] x with xxx-workspace-index-me-unstable-v3 wayland protocol
+Subject: x with xxx-workspace-index-me-unstable-v3 wayland protocol
 
-When the one client using this (tiili) replaces this with use
-of ext-workspaces then this change is removed.
 ---
  ...-workspace-index-me-unstable-v3-protocol.c |  38 +++++++
  ...ace-index-me-unstable-v3-server-protocol.h |  88 +++++++++++++++
@@ -12,12 +8,8 @@ of ext-workspaces then this change is removed.
  .../xxx-workspace-index-me-unstable-v3.xml    |  26 +++++
  src/workspaces.c                              |   8 ++
  5 files changed, 263 insertions(+)
- create mode 100644 include/xxx/xxx-workspace-index-me-unstable-v3-protocol.c
- create mode 100644 include/xxx/xxx-workspace-index-me-unstable-v3-server-protocol.h
- create mode 100644 include/xxx/xxx-workspace-index-me-unstable-v3.ch
- create mode 100644 include/xxx/xxx-workspace-index-me-unstable-v3.xml
 
-diff --git a/include/xxx/xxx-workspace-index-me-unstable-v3-protocol.c b/include/xxx/xxx-workspace-index-me-unstable-v3-protocol.c
+diff --git ... b/include/xxx/xxx-workspace-index-me-unstable-v3-protocol.c
 new file mode 100644
 index 00000000..2d0c0fba
 --- /dev/null
@@ -61,7 +53,7 @@ index 00000000..2d0c0fba
 +	1, zxxx_workspace_index_me_v3_requests,
 +	1, zxxx_workspace_index_me_v3_events,
 +};
-diff --git a/include/xxx/xxx-workspace-index-me-unstable-v3-server-protocol.h b/include/xxx/xxx-workspace-index-me-unstable-v3-server-protocol.h
+diff --git ... b/include/xxx/xxx-workspace-index-me-unstable-v3-server-protocol.h
 new file mode 100644
 index 00000000..c2300e45
 --- /dev/null
@@ -155,7 +147,7 @@ index 00000000..c2300e45
 +#endif
 +
 +#endif
-diff --git a/include/xxx/xxx-workspace-index-me-unstable-v3.ch b/include/xxx/xxx-workspace-index-me-unstable-v3.ch
+diff --git ... b/include/xxx/xxx-workspace-index-me-unstable-v3.ch
 new file mode 100644
 index 00000000..ac4d4455
 --- /dev/null
@@ -264,7 +256,7 @@ index 00000000..ac4d4455
 +
 +	xxx_workspace_index_me_v3_create(server->wl_display);
 +}
-diff --git a/include/xxx/xxx-workspace-index-me-unstable-v3.xml b/include/xxx/xxx-workspace-index-me-unstable-v3.xml
+diff --git ... b/include/xxx/xxx-workspace-index-me-unstable-v3.xml
 new file mode 100644
 index 00000000..28f270c3
 --- /dev/null
@@ -329,6 +321,3 @@ index 79f5e018..cf2659bf 100644
  }
  
  void
--- 
-2.49.0
-
