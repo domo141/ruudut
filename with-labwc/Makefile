@@ -39,6 +39,8 @@ endif
 prexit0: ; $(eval override .VARIABLES :=)
 # using .VARIABLES is hack to "disable" vars.
 
+C = @{u}
+
 override define sh =
 test '$(.VARIABLES)' || exit 0
 #set -x
@@ -47,7 +49,7 @@ x () { printf '+ %s\n' "$$*" >&2; "$$@"; }
 x_eval () { printf '+ %s\n' "$$*" >&2; eval "$$*"; }
 x_exec () { printf '+ %s\n' "$$*" >&2; exec "$$@"; }
 set_dwt () {
-	set -- `git -C $(XR_LUD) log -1 --abbrev=7 --format='%ci %h' @{u}`
+	set -- `git -C $(XR_LUD) log -1 --abbrev=7 --format='%ci %h' $C`
 	test $$# -ge 4 || exit 15
 	wt=wt-$$1-$$4
 }
@@ -74,7 +76,7 @@ fetch:  # git fetch -v -p changes in %XR_LUD/
 	x_exec git -C $(XR_LUD) fetch -v -p
 
 .PHONY: mkwt
-mkwt:   # make worktree from @{u} commit in %XR_LUD
+mkwt:   # make worktree from @{u} (or C=...) commit in %XR_LUD
 	$(sh)
 	set -- $(ARGS)
 	test $$# = 1 || die "Usage: make $@ (wt-sfx | '.')"
@@ -84,7 +86,7 @@ mkwt:   # make worktree from @{u} commit in %XR_LUD
 		"Use another 'wt-sfx' for another worktree, or execute" \
 		"  git -C $(XR_LUD) worktree remove $$wt" \
 		'in preparation to recreate current worktree.'
-	x git -C $(XR_LUD) worktree add "$$PWD/$$wt" @{u}
+	x git -C $(XR_LUD) worktree add "$$PWD/$$wt" $C
 	x_exec git -C $(XR_LUD) worktree list
 
 .PHONY: lswt
@@ -131,7 +133,7 @@ l:      # git log --pretty=fuller --name-status -m  in worktree / . / @{u}
 	$(sh)
 	test '$(ARGS)' || die "Usage: make $@ {worktree/ | '.' | u}"
 	test '$(ARGS)' = . && set_dwt || wt='$(ARGS)'
-	test '$(ARGS)' = u && { wt=$(XR_LUD); a=@{u}; } || a=
+	test '$(ARGS)' = u && { wt=$(XR_LUD); a=$C; } || a=
 	x_exec git -C "$$wt" log --pretty=fuller --name-status -m $$a
 
 .PHONY: t
@@ -139,7 +141,7 @@ t:      # tig in worktree / . / @{u}  (fyi: shows also "describe" info)
 	$(sh)
 	test '$(ARGS)' || die "Usage: make $@ {worktree/ | '.' | u}"
 	test '$(ARGS)' = . && set_dwt || wt='$(ARGS)'
-	test '$(ARGS)' = u && { wt=$(XR_LUD); a=@{u}; } || a=
+	test '$(ARGS)' = u && { wt=$(XR_LUD); a=$C; } || a=
 	x_exec tig -C "$$wt" $$a
 
 .PHONY: prune
