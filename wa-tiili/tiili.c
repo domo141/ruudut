@@ -353,15 +353,12 @@ static bool draw_buffer(void)
     static time_t pt = 0;
     time_t ct = time(NULL);
 
-    /* latest addition... */
-    bool updated;
-    if (eln >= 0) {
-	draw_border(eln);
+    const char leln = eln;
+    if (leln >= 0) {
+	draw_border(leln);
 #define draw_border _draw_border_do_not_call_again_
 	eln = -1;
-	updated = 1;
     }
-    else updated = 0;
 
     if (wsn >= 0) {
 	//unsigned int ws = wsn; if (ws > 9) ws = 0;
@@ -375,7 +372,7 @@ static bool draw_buffer(void)
 	// lisää vihje wev(1):sta kun lisää sen pointer-jutukkeen...
     }
     // it is enough to read battery every 1..5sec (i.e. not every "frame")
-    else if (ct == pt) return updated;
+    else if (ct == pt) return leln >= 0;
 
     // if ct == pt) return updated; and updated = 1 in wsn block -- later //
     // then, //DP("%s %d\n", __func__, updated);
@@ -775,6 +772,8 @@ static const struct wl_registry_listener wl_registry_listener = {
 static int next_sec;
 static int next_tout(void)
 {
+    // if (occluded) return -1;
+
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     if (ts.tv_sec >= next_sec) {
@@ -845,23 +844,22 @@ int main(int argc, char ** argv)
     while (wl_display_dispatch(wl_display) >= 0 && wl_buffer == NULL) {
 	// wait for xdg_surface_configure() to create wl_buffer...
     }
-    struct pollfd pfds[1];
-    pfds[0].fd = wl_display_get_fd(wl_display);
-    pfds[0].events = POLLIN;
+    struct pollfd pfd;
+    pfd.fd = wl_display_get_fd(wl_display);
+    pfd.events = POLLIN;
 
     next_sec = time(NULL) + 4;
     next_sec = next_sec - next_sec % 5;
     wl_display_flush(wl_display);  // expect data fits to (100K+) socket buf)
     while (1) {
 	int tout = next_tout();
-	int nfds = poll(pfds, 1, tout);
+	(void)poll(&pfd, 1, tout);
 	//DP("xxx %d %d %d\n", tout, next_sec, nfds);
-	if (nfds) {
-	    if (pfds[0].revents) {
-		// fixme: check failure, print it
-		if (wl_display_dispatch(wl_display) < 0) break;
-	    }
-	} else next_sec += 5;
+	if (pfd.revents) {
+	    // fixme: check failure, print it
+	    if (wl_display_dispatch(wl_display) < 0) break;
+	}
+	else next_sec += 5;
 
 	if (wl_buffer_released == 0)
 	    continue;
