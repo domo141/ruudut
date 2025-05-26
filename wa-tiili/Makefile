@@ -87,12 +87,8 @@ run: $(BD)/tiili
 
 WC = echo give WC=... on command line
 
-.PHONY: runn  # expect (e.g) autostart have this TIILI_CMD support...
-runn: $(BD)/tiili
-	env TIILI_CMD=$(CURDIR)/$(BD)/tiili $(WC)
-
-.PHONY: vwoc  # view without comments (rude imprecise approach but useful)
-vwoc:
+.PHONY: vwoc  # view without comments (hacky imprecise approach but useful)
+vwoc:         # useful to view wayland protocol header files
 ifeq (vwoc, $(lastword $(MAKECMDGOALS)))
 	@/bin/echo usage: make $@ filename.h
 	@/bin/false
@@ -118,9 +114,9 @@ rotclean:
 	test -e $(BD),$$v5oos && { : $(BD),$$v5oos exists; exit 1; } || \
 	mv $(BD) $(BD),$$v5oos
 
-# .txz useable when in vc repo tree
+# .txz useable when in vc repo tree (*/* - exclude subdirs)
 ifneq ($(wildcard ../tools/ztarfiles.pl),)
 .PHONY: .txz
 .txz:
-	../tools/ztarfiles.pl xz tiili git-clean
+	../tools/ztarfiles.pl xz tiili git-clean '*/*'
 endif
