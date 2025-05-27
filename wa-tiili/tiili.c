@@ -1,6 +1,7 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
-#define _POSIX_C_SOURCE 200112L
+// SPDX-License-Identifier: BSD 2-Clause "Simplified" License
+
 #include "more-warnings.h"
 
 #include <unistd.h>
@@ -8,6 +9,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -16,6 +18,8 @@
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <err.h>
 #include <wayland-client.h>
 
 #ifndef USE_WLR_LAYER_SHELL
@@ -31,6 +35,8 @@
 
 #include "ext-workspace-v1-client-protocol.h"
 #pragma GCC diagnostic pop
+
+#include "locall.h"
 
 #if 1
 #define DP printf
@@ -160,79 +166,48 @@ static const struct wl_buffer_listener wl_buffer_listener = {
     .release = wl_buffer_release,
 };
 
-#include "txts.ch"
-
-/*static*/ const char _info[] = TEXTS_CH_INFO;
+static struct Varz V;
 
 static struct {
+    const char * glyphs;
     uint32_t * data;
-    int width;
-    int height;
+    u_short width;
+    u_short height;
     int stride;
     int size;
+    //
+    u_short loc_ws;	// workspace
+    u_short loc_d1;	// mday
+    u_short loc_d2;
+    u_short loc_wd;	// wday
+    u_short loc_h1;	// hour
+    u_short loc_h2;
+    u_short loc_m1;	// minute
+    u_short loc_m2;
+    u_short loc_s1;	// second
+    u_short loc_s2;
+    u_short loc_w0;	// week nr (+/-nn)
+    u_short loc_w1;
+    u_short loc_w2;
+    u_short loc_b0;	// battery (+-nn.n)
+    u_short loc_b1;
+    u_short loc_b2;
+    u_short loc_b4;
 } B;
 
-static void draw_txti(const struct txtimg * ti, int xoff)
+// XXX move down in commit, maybe one before... (also above)
+static void draw_txti(int pixoff, u_short w, u_short xoff)
 {
     uint32_t * buffer = B.data + xoff;
     const int b_width = B.width;
-    const uint32_t * pixelp = ti->pixels;
-    const int t_width = ti->width;
-    for (int y = 0; y < TEXTHEIGHT; ++y) {
-	for (int x = 0; x < t_width; x++) {
-	    buffer[y * b_width + x] = *pixelp++;
+    const char * pixelp = B.glyphs + pixoff;
+    for (int y = 0; y < V.glyh; ++y) {
+	for (int x = 0; x < w; x++) {
+	    u_char c = *pixelp++;
+	    buffer[y * b_width + x] = 0xff000000 | (c << 16 ) | (c << 8) | c;
 	}
     }
 }
-
-// these can be removed after LOC_* defines fixed //
-static_assert (TEXTWIDTH_NUM == TEXTWIDTH_COL);
-static_assert (TEXTWIDTH_NUM == TEXTWIDTH_DOT);
-static_assert (TEXTWIDTH_NUM == TEXTWIDTH_W);
-static_assert (TEXTWIDTH_NUM == TEXTWIDTH_PLUS);
-static_assert (TEXTWIDTH_NUM == TEXTWIDTH_MINUS);
-
-// workspace
-#define LOC_WS (TEXTWIDTH_NUM * 3 / 4)
-#define LOC_XX (TEXTWIDTH_NUM * 1 / 4)
-
-// mday
-#define LOC_MD1 (LOC_WS + TEXTWIDTH_NUM * 13 / 6)
-#define LOC_MD2 (LOC_MD1 + TEXTWIDTH_NUM)
-
-// wday(abbrv)
-#define LOC_WD (LOC_MD2 + TEXTWIDTH_NUM * 2)
-
-// HH:MM:SS
-#define LOC_H1 (LOC_WD + TEXTWIDTH_WDAYS + TEXTWIDTH_NUM)
-#define LOC_H2 (LOC_H1 + TEXTWIDTH_NUM)
-#define LOC_HS (LOC_H1 + TEXTWIDTH_NUM * 2)
-#define LOC_M1 (LOC_H1 + TEXTWIDTH_NUM * 3)
-#define LOC_M2 (LOC_H1 + TEXTWIDTH_NUM * 4)
-#define LOC_MS (LOC_H1 + TEXTWIDTH_NUM * 5)
-#define LOC_S1 (LOC_H1 + TEXTWIDTH_NUM * 6)
-#define LOC_S2 (LOC_H1 + TEXTWIDTH_NUM * 7)
-
-// week number
-#define LOC_W0 (LOC_H1 + TEXTWIDTH_NUM * 9)
-#define LOC_W1 (LOC_W0 + TEXTWIDTH_NUM * 1)
-#define LOC_W2 (LOC_W0 + TEXTWIDTH_NUM * 2)
-
-// battery
-#define LOC_B0 (LOC_W2 + TEXTWIDTH_NUM * 2)
-#define LOC_B1 (LOC_B0 + TEXTWIDTH_NUM * 1)
-#define LOC_B2 (LOC_B0 + TEXTWIDTH_NUM * 2)
-#define LOC_B3 (LOC_B0 + TEXTWIDTH_NUM * 3)
-#define LOC_B4 (LOC_B0 + TEXTWIDTH_NUM * 4)
-
-static const struct txtimg *nums[10] = {
-    &ti_0, &ti_1, &ti_2, &ti_3, &ti_4,
-    &ti_5, &ti_6, &ti_7, &ti_8, &ti_9
-};
-static const struct txtimg *wdays[8] = {
-    &ti_wd_7, &ti_wd_1, &ti_wd_2, &ti_wd_3,
-    &ti_wd_4, &ti_wd_5, &ti_wd_6, &ti_wd_7
-};
 
 // next 2 originally from musl libc (MIT licensed), tuned a bit
 static inline int is_leap(int y)
@@ -241,7 +216,7 @@ static inline int is_leap(int y)
     return !(y%4) && ((y%100) || !(y%400));
 }
 
-static int iso_week(int year, int yday, int wday)
+static int iso_8601_week(int year, int yday, int wday)
 {
     int val = (yday + 7 - (wday + 6) % 7) / 7;
     /* If 1 Jan is just 1-3 days past Monday,
@@ -275,11 +250,6 @@ enum { BATPATHPFXLEN = sizeof BpPFX - 1 };
 
 static void open_batfile(void)
 {
-    B.width = LOC_B4 + TEXTWIDTH_NUM + LOC_WS;
-    B.height = TEXTHEIGHT + 1;
-    B.stride = B.width * 4;
-    B.size = B.stride * B.height;
-
     for (int i = 0; i < 9; i++) {
 	batpath[BATPATHPFXLEN] = '0' + i;
 	memcpy(batpath + BATPATHPFXLEN + 1, "/" "uevent", 7);
@@ -287,10 +257,6 @@ static void open_batfile(void)
 	batfd = open(batpath, O_RDONLY, 0);
 	if (batfd >= 0) return;
     }
-    // else no batfile
-    B.width = LOC_B0 - LOC_XX; // XXX ;/
-    B.stride = B.width * 4;
-    B.size = B.stride * B.height;
 }
 
 //STRNCMP_LITERAL in notmuch...
@@ -364,7 +330,7 @@ static bool draw_buffer(void)
 	//unsigned int ws = wsn; if (ws > 9) ws = 0;
 //#pragma GCC diagnostic push
 //#pragma GCC diagnostic ignored "-Wall" // "-Wchar-subscripts"
-	draw_txti(nums[+wsn], LOC_WS);
+	draw_txti(V.off_nbrs[+wsn], V.glywn, B.loc_ws); // +wsn to silence warn
 //#pragma GCC diagnostic pop
 	wsn = -1;
 	// note to self: damage-x -- damage-width to retval (or x1,x2)
@@ -380,35 +346,29 @@ static bool draw_buffer(void)
     if (pt / 300 != ct / 300) { // every 5 min //
 	struct tm ctm; localtime_r(&ct, &ctm);
 
-	draw_txti(nums[ctm.tm_mday / 10], LOC_MD1);
-	draw_txti(nums[ctm.tm_mday % 10], LOC_MD2);
+	draw_txti(V.off_nbrs[ctm.tm_mday / 10], V.glywn, B.loc_d1);
+	draw_txti(V.off_nbrs[ctm.tm_mday % 10], V.glywn, B.loc_d2);
 
-	draw_txti(wdays[ctm.tm_wday], LOC_WD);
+	draw_txti(V.off_wdays[ctm.tm_wday], V.glywd, B.loc_wd);
 
-	draw_txti(nums[ctm.tm_hour / 10], LOC_H1);
-	draw_txti(nums[ctm.tm_hour % 10], LOC_H2);
+	draw_txti(V.off_nbrs[ctm.tm_hour / 10], V.glywn, B.loc_h1);
+	draw_txti(V.off_nbrs[ctm.tm_hour % 10], V.glywn, B.loc_h2);
+	// :
+	draw_txti(V.off_nbrs[ctm.tm_min / 10], V.glywn, B.loc_m1);
 
-	draw_txti(&ti_colon, LOC_HS);
-
-	draw_txti(nums[ctm.tm_min / 10], LOC_M1);
-
-	draw_txti(&ti_colon, LOC_MS);
-	if (batfd >= 0) draw_txti(&ti_dot, LOC_B3);
-
-	int week = iso_week(ctm.tm_year, ctm.tm_yday, ctm.tm_wday);
-
-	draw_txti(&ti_w, LOC_W0);
-	draw_txti(nums[week / 10], LOC_W1);
-	draw_txti(nums[week % 10], LOC_W2);
+	int week = iso_8601_week(ctm.tm_year, ctm.tm_yday, ctm.tm_wday);
+	// w
+	draw_txti(V.off_nbrs[week / 10], V.glywn, B.loc_w1);
+	draw_txti(V.off_nbrs[week % 10], V.glywn, B.loc_w2);
     }
     uint8_t min0 = ct / 60 % 10;
     uint8_t sec1 = ct / 10 % 6;
     uint8_t sec0 = ct % 10;
 
-    draw_txti(nums[min0], LOC_M2);
-    //draw_txti(&ti_colon, LOC_MS);
-    draw_txti(nums[sec1], LOC_S1);
-    draw_txti(nums[sec0], LOC_S2);
+    draw_txti(V.off_nbrs[min0], V.glywn, B.loc_m2);
+    // :
+    draw_txti(V.off_nbrs[sec1], V.glywn, B.loc_s1);
+    draw_txti(V.off_nbrs[sec0], V.glywn, B.loc_s2);
 
     pt = ct;
 
@@ -420,26 +380,73 @@ static bool draw_buffer(void)
 	    return 1; //damage-x2
 
 	if (batstatus > 0) {
-	    draw_txti(&ti_plus, LOC_B0);
+	    draw_txti(V.off_plus, V.glywp, B.loc_b0);
 	}
 	else {
-	    draw_txti(&ti_minus, LOC_B0);
+	    draw_txti(V.off_minus, V.glywp, B.loc_b0);
 	    batstatus = -batstatus;
 	}
-	draw_txti(nums[(batstatus / 100) % 10], LOC_B1);
-	draw_txti(nums[(batstatus / 10) % 10], LOC_B2);
-	//draw_txti(&ti_dot, LOC_B3);
-	draw_txti(nums[batstatus % 10], LOC_B4);
+	draw_txti(V.off_nbrs[(batstatus / 100) % 10], V.glywn, B.loc_b1);
+	draw_txti(V.off_nbrs[(batstatus / 10) % 10], V.glywn, B.loc_b2);
+	// .
+	draw_txti(V.off_nbrs[batstatus % 10], V.glywn, B.loc_b4);
 
 	prev_batstatus = batstatus;
     }
-    //DP("%d %d\n", LOC_B0, LOC_B4);
     return 1;
+}
+
+static struct {
+    char a;
+    char nr;
+    char nl;
+    char w;
+} na = { 2, 0, 0, 0 };
+
+static void buffer_dimensions(void)
+{
+    B.height = V.glyh + na.a + 1;
+    u_short w = V.glywn;
+    na.w = V.glywn - na.w;
+    // over/underflow can happen w/ large-enough pixsize. fun!
+    if (na.w < 2) na.w = 2;
+    na.nr += na.nl;
+    B.loc_ws = w * 3 / 4;
+    B.loc_d1 = B.loc_ws + w + na.w;
+    B.loc_d2 = B.loc_d1 + w;
+    B.loc_wd = B.loc_d2 + w + na.w;
+
+    B.loc_h1 = B.loc_wd + V.glywd + na.w;
+    B.loc_h2 = B.loc_h1 + w;
+    B.loc_m1 = B.loc_h2 + w + V.glywc - na.nr;
+    B.loc_m2 = B.loc_m1 + w;
+    B.loc_s1 = B.loc_m2 + w + V.glywc - na.nr;
+    B.loc_s2 = B.loc_s1 + w;
+
+    B.loc_w0 = B.loc_s2 + w + na.w;
+    B.loc_w1 = B.loc_w0 + V.glyww;
+    B.loc_w2 = B.loc_w1 + w;
+
+    u_short le;
+    if (batfd < 0)
+	le = B.loc_w2 + w;
+    else {
+	B.loc_b0 = B.loc_w2 + w + na.w;
+	B.loc_b1 = B.loc_b0 + V.glywp;
+	B.loc_b2 = B.loc_b1 + w;
+	B.loc_b4 = B.loc_b2 + w + V.glywc - na.nr;
+	le = B.loc_b4 + w;
+    }
+    le += w * 3 / 4;
+    B.width = le;
+    B.stride = B.width * 4;
+    B.size = B.stride * B.height;
 }
 
 static struct wl_buffer * wl_buffer;
 static struct wl_buffer * create_buffer(void)
 {
+    BB;
     int fd = allocate_shm_file(B.size);
     if (fd < 0) {
 	return NULL;
@@ -454,8 +461,9 @@ static struct wl_buffer * create_buffer(void)
 	pool, 0, B.width, B.height, B.stride, WL_SHM_FORMAT_ARGB8888);
     wl_shm_pool_destroy(pool);
     close(fd);
-
+    BE;
     // blank buffer (static inline later, in near proximity to draw_border) //
+    // ^ or not, lots of code changed then...
     //for (int i = 0; i < B.size / 4; i++) B.data[i] = 0xff004400;
     BB;
     int i;
@@ -465,6 +473,13 @@ static struct wl_buffer * create_buffer(void)
 	B.data[i] = B.data[i + B.width - 1] = 0x00000000;
     }
     BE;
+    BB;
+    draw_txti(V.off_colon, V.glywc, B.loc_h2 + V.glywn - na.nl);
+    draw_txti(V.off_colon, V.glywc, B.loc_m2 + V.glywn - na.nl);
+    draw_txti(V.off_w, V.glyww, B.loc_s2 + V.glywn + na.w);
+    draw_txti(V.off_dsep, V.glywc, B.loc_b2 + V.glywn - na.nl);
+    BE;
+
     draw_buffer();
 
     wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, NULL);
@@ -783,10 +798,121 @@ static int next_tout(void)
     return (next_sec - ts.tv_sec) * 1000 - ts.tv_nsec / 1000000;
 }
 
+static int do_args(int argc, char ** argv)
+{
+    _Bool O = 0;
+    char *wds = (char*)(intptr_t)"";
+    const char * wl = "w";
+    int margin = -150;
+    const char * font = "Monospace-20";
+    BB;
+    int opt;
+    while ((opt = getopt(argc, argv, "Oa:d:f:m:n:w:h")) >= 0) {
+	switch (opt) {
+	case 'O': O = 1; break;
+	case 'a':
+	    // let's see if anyone ever wants > 9 here
+	    if (isdigit(optarg[0])) na.a = optarg[0] - '0';
+	    break;
+	case 'd':
+	    wds = optarg;
+	    if (strchr(wds, ',') != NULL) {
+		char * p;
+		int i;
+		for (i = 0, p = wds; i < 7; i++, p++) {
+		    p = strchr(p, ',');
+		    if (p == NULL) break;
+		}
+		if (i != 6) errx(1, "weekdays option '%s' does not"
+				 " have exactly 6 ','s (sun,...)", wds);
+		break;
+	    }
+	    if (strchr(optarg, '_') == NULL)
+		errx(1, "weekdays option '%s' does not have ','s or '_'", wds);
+	    break;
+	case 'f':
+	    font = optarg;
+	    break;
+	case 'm':
+	    margin = atoi(optarg);
+	    if (margin == 0) {
+		switch (optarg[0]) {
+		case '0': break;
+		case '+': case '-': if (optarg[1] != '0') margin = -150;
+		}
+	    }
+	    break;
+	case 'n':
+	    // let's see if anyone ever wants > 9 here
+	    if (isdigit(optarg[0])) {
+		if (optarg[1] == '\0') {
+		    na.w = optarg[0] - '0';
+		    break;
+		}
+		if (optarg[1] == ':' && isdigit(optarg[2]) && optarg[3] == 0) {
+		    na.nl = optarg[0] - '0';
+		    na.nr = optarg[2] - '0';
+		    break;
+		}
+	    }
+	    errx(1, "'%s' not 'n:n'", optarg);
+	case 'w':
+	    wl = optarg;
+	    break;
+	default:
+	    char * b = strrchr(argv[0], '/'); b = b? b + 1: argv[0];
+	    fprintf(stderr, "\nUsage: %s [-f font] [-d wdays] "
+		    "[-a n] [-n(n:n|n)] [-m margin] [-w wnl] [-O]\n\n\
+  wdays: locale in format la_TE.UTF-8 or days in format su,mo,tu,we,th,fr,sa\n\
+ -a num: extra black pixel lines after bottom glyph, default 2\n\
+ -n ...: narrow ':' and '.' if in format n:n, narrow spaces if in format n\n\
+ -m ...: layer-shell margin from upper left (pos) or right (neg): default -150\
+\n\
+ -w ...: letter (or any string) before week number. default 'w'\n\
+ -O    : replace the font's '0' with 'O'\n\n\
+ eksamppeli: %s -fHack-24 -dfi_FI -a0 -n 2:2 -n 2 -wv -O\n\
+             but with e.g. 'sv_SE' one needs '.UTF-8'...\n\n", b, b);
+	    exit(1);
+	}
+    }
+    BE;
+
+    struct Varz * v;
+    BB;
+    void * tmp = mmap(NULL, MMSIZ, PROT_READ | PROT_WRITE,
+                      MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    void * shr = mmap(NULL, MMSIZ, PROT_READ | PROT_WRITE,
+                      MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    munmap(tmp, MMSIZ);
+    v = (struct Varz *)shr;
+    BE;
+
+    pid_t pid = fork();
+    if (pid < 0) err(1, "fork");
+    if (pid == 0) {
+        /* child */
+        fill_glyphs(v, font, wds, O, wl); // noreturn //
+        exit(111); // not reached //
+    }
+    // parent //
+    wait(NULL);
+    if (v->glyh == 0) exit(1);
+    char * g = malloc(v->off_end);
+    if (g == NULL) errx(1, "out of memory!");
+    memcpy(&V, v, sizeof V);
+    memcpy(g, (v + 1), v->off_end);
+    B.glyphs = g;
+    // more B.s in create_buffer()
+    munmap(v, MMSIZ);
+    return margin;
+}
+
 
 int main(int argc, char ** argv)
 {
+    int margin = do_args(argc, argv);
     open_batfile();
+    buffer_dimensions();
 
     struct wl_display * wl_display = wl_display_connect(NULL);
     BB;
@@ -810,7 +936,6 @@ int main(int argc, char ** argv)
 	"wlroots-vai-tiili");
     zwlr_layer_surface_v1_set_size(layer_surface, B.width, B.height);
     BB;
-    int margin = argc > 1? atoi(argv[1]): -150;
     int anchor, lm, rm;
     if (margin <= 0) {
 	anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
@@ -820,6 +945,7 @@ int main(int argc, char ** argv)
 	anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
 	lm = margin; rm = 0;
     }
+#define margin margin_no_more
     anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
     zwlr_layer_surface_v1_set_anchor(layer_surface, anchor);
     //zwlr_layer_surface_v1_set_exclusive_zone(layer_surface, exclusive_zone);

@@ -2,6 +2,7 @@
 #define MORE_WARNINGS_H 1
 
 // (Ø) public domain, like https://creativecommons.org/publicdomain/zero/1.0/
+// SPDX-License-Identifier: Unlicense
 
 #if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
 // on linux: man feature_test_macros -- try ftm.c at the end of it
@@ -116,7 +117,7 @@ PRAGMA_GCC_DIAG_W (-Wuninitialized) // gcc 4.4.6, 4.8.5 ...
 #endif /* defined (__GNUC__) && defined (__STDC__) */
 
 /* name and interface from talloc.c */
-#ifndef discard_const_p // probably never defined, but...
+#ifndef discard_const_p // probably not defined (yet), but...
 //#include <stdint.h>
 #if defined (__INTPTR_TYPE__) /* e.g. gcc 4.8.5 - gcc 10.2 (2020-11-11) */
 #define discard_const_p(type, ptr) ((type *)((__INTPTR_TYPE__)(ptr)))

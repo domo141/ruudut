@@ -6,7 +6,7 @@
 <b>Upper right corner of a screen</b>
 <br/>
 workspace, day, weekday, time,
-ISO week number and battery %
+ISO 8601 week number and battery %
 <br/>
 <br/>
 <b>Näytön oikea yläkulma</b>

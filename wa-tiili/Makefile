@@ -27,8 +27,9 @@ help:
 all: $(BD)/tiili
 
 CC = cc
-#CFLAGS = -ggdb -DUSE_WLR_LAYER_SHELL=$(USE_WLR_LAYER_SHELL)
-CFLAGS = -std=c11 -O2 -DUSE_WLR_LAYER_SHELL=$(USE_WLR_LAYER_SHELL) -I$(GD)
+#CFLAGS = -std=c11 -ggdb
+CFLAGS = -std=c11 -O2
+CFLAGS += -DUSE_WLR_LAYER_SHELL=$(USE_WLR_LAYER_SHELL) -I$(GD)
 
 wl-protocols.h = $(GD)/xdg-shell-client-protocol.h
 wl-protocols.c = $(GD)/xdg-shell-protocol.c
@@ -38,25 +39,24 @@ wl-protocols.h += $(GD)/wlr-layer-shell-unstable-v1-client-protocol.h
 wl-protocols.c += $(GD)/wlr-layer-shell-unstable-v1-protocol.c
 endif
 
-wl-protocols-i.h = $(wl-protocols.h)
 wl-protocols-e.h = $(wl-protocols.h)
-wl-protocols-i.c = $(wl-protocols.c)
 wl-protocols-e.c = $(wl-protocols.c)
 
 wl-protocols-e.h += $(GD)/ext-workspace-v1-client-protocol.h
 wl-protocols-e.c += $(GD)/ext-workspace-v1-protocol.c
 
-$(BD)/tiili: tiili.c $(wl-protocols-e.h) $(wl-protocols-e.c) $(GD)/txts.ch
-	$(CC) $(CFLAGS) -o $@ $< $(wl-protocols-e.c) -lwayland-client -lrt
+TSRCS = tiili.c child.c dl.c
+TSRCS += $(wl-protocols-e.c)
+
+$(BD)/tiili: CFLAGS += `pkg-config --cflags fontconfig freetype2 harfbuzz`
+$(BD)/tiili: $(TSRCS) $(wl-protocols-e.h) Makefile
+	$(CC) $(CFLAGS) -o $@ $(TSRCS) -lwayland-client -lrt
 
 $(BD):
 	mkdir -p $@
 
 $(GD): | $(BD)
 	mkdir $@
-
-#wl-protocols-e.h += $(GD)/xdg-shell-client-protocol.h
-#wl-protocols-e.c += $(GD)/xdg-shell-protocol.c
 
 vpath %.xml /usr/share/wayland-protocols/stable/xdg-shell/
 vpath %.xml /usr/share/wayland-protocols/staging/ext-workspace/
@@ -66,12 +66,6 @@ $(GD)/%-client-protocol.h: %.xml | $(GD)
 
 $(GD)/%-protocol.c: %.xml | $(GD)
 	wayland-scanner private-code $< $@
-
-$(GD)/txts.ch: | $(GD)
-	$(info )
-	$(warning Execute mk-txtimgs.pl to create $@)
-	$(warning E.g. ; ./mk-txtimgs.pl $(GD)/ - 20 +2 w monospace)
-	$(error then run $(MAKE) again *** )
 
 # for reference #
 .PHONY: srv-prots
@@ -110,7 +104,8 @@ distclean: clean
 # "rotate" clean
 .PHONY: rotclean
 rotclean:
-	@set -x; test -d $(BD) || exit 0; v5oos=`./verpul.sh -q -4` || exit; \
+	@set -x; test -d $(BD) || exit 0; \
+	v5oos=`../tools/verpul.sh -q -4` || exit; \
 	test -e $(BD),$$v5oos && { : $(BD),$$v5oos exists; exit 1; } || \
 	mv $(BD) $(BD),$$v5oos
 
