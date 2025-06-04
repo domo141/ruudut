@@ -25,7 +25,8 @@ Wa- prefix is to separate Wayland Applications in their own listing block:
 
 + [[wa-ootappa]] :: red countdown timer in the middle of the screen
 
-+ [[wa-tiili]] :: workspace, day and time, battery status - overlay "brick"
++ [[wa-tiili]] :: workspace, day and time, battery status - in an overlay block
+  on desktop which consumes "zero" space
 
 With- prefix is to separate content used with existing desktop components:
 
