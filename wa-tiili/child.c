@@ -115,7 +115,7 @@ do_glyphs(hb_font_t * hb_ft_font, hb_buffer_t * buf, FT_Face ft_face,
     for (unsigned int i = 0; i < glyph_count; i++)
 	wdth += (glyph_pos[i].x_advance >> 6);
     wdth += 1;
-    //df("txt: '%s', w: %d\n", txt, wdth); //exit(1);
+    //df("txt: '%s' (%d), w: %d\n", txt, strlen(txt), wdth); //exit(1);
 
     //hb_position_t cursor_x = 0;
     //hb_position_t cursor_y = 0;
@@ -180,7 +180,7 @@ void fill_glyphs(struct Varz * varz, const char * fcname,
 	}
     }
     else {
-	//char * ol = setlocale(LC_TIME, "sv_SE.UTF-8");
+	// note to self: with non-UTF-8 locales one may get e.g. latin1 chars
 	setlocale(LC_TIME, wds);
 	// there is ~128k space (before initial pos of char * mem) //
 	char *p = (char *)(varz + 1);
@@ -192,8 +192,6 @@ void fill_glyphs(struct Varz * varz, const char * fcname,
 	    p += strlen(p) + 1;
 	}
 	wds = (char *)(varz + 1);
-	//setlocale(LC_TIME, ol);
-	//setlocale(LC_TIME, "sv_SE.UTF-8");
     }
 
     FT_Library ft_library;
