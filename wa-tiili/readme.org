@@ -20,3 +20,8 @@ viikkonumero ja akun varaus
 
 </td></tr></table>
 #+END_HTML
+
+- make
+- make all
+- ./build/tiili -h
+- ./build/tiili
