@@ -38,6 +38,7 @@
 #define df1(...) do {} while (0)
 #endif
 #define df0(...) do {} while (0)
+#define df2 printf
 
 #if 0
 void view_glyph(const char * mem, u_short w, u_short h)
@@ -112,8 +113,10 @@ do_glyphs(hb_font_t * hb_ft_font, hb_buffer_t * buf, FT_Face ft_face,
 	= hb_buffer_get_glyph_positions(buf, &glyph_count);
 
     u_short wdth = 0;
-    for (unsigned int i = 0; i < glyph_count; i++)
+    for (unsigned int i = 0; i < glyph_count; i++) {
 	wdth += (glyph_pos[i].x_advance >> 6);
+	//df2("%s %d %d\n", txt, glyph_pos[i].x_advance, wdth);
+    }
     wdth += 1;
     //df("txt: '%s' (%d), w: %d\n", txt, strlen(txt), wdth); //exit(1);
 
@@ -151,8 +154,10 @@ do_glyphs(hb_font_t * hb_ft_font, hb_buffer_t * buf, FT_Face ft_face,
 	    errx(1, "programmer could not figure out \"baseline\" (%d)", yy);
 
 	for (int y = 0; y < y_max; y++)
-	    for (int x = 0; x < x_max; x++)
-		mem[(y+yy) * wdth + x+xx] = ft_bitmap.buffer[y * x_max + x];
+	    for (int x = 0; x < x_max; x++) {
+		char b = ft_bitmap.buffer[y * x_max + x];
+		if (b) mem[(y+yy) * wdth + x+xx] = b;
+	    }
 
 	mem += glyph_pos[i].x_advance >> 6;
     }
