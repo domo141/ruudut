@@ -148,7 +148,7 @@ index 9e87655e..8ea1ec88 100644
 +#include "xxx/xxx-sigwinch-to-views.ch"
 +#undef XXX_CODE_FOR_SERVER_C
 +
- #define LAB_WLR_COMPOSITOR_VERSION 5
+ #define LAB_WLR_COMPOSITOR_VERSION 6
  #define LAB_WLR_FRACTIONAL_SCALE_V1_VERSION 1
  #define LAB_WLR_LINUX_DMABUF_VERSION 4
 @@ -737,6 +741,7 @@ server_start(struct server *server)
