@@ -1,21 +1,21 @@
-From f31cc0996571535148a55f9d4138df138746af46 Mon Sep 17 00:00:00 2001
+From e76b7e738f8e5f899910025b88a35b12755b6f4b Mon Sep 17 00:00:00 2001
 From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Tue, 14 Jan 2025 06:45:06 +0200
 Subject: [PATCH] + top commit +
 
 ---
- GNUmakefile         | 255 ++++++++++++++++++++++++++++++++++++++++++++
+ GNUmakefile         | 260 ++++++++++++++++++++++++++++++++++++++++++++
  binpatch-version.pl |  57 ++++++++++
- 2 files changed, 312 insertions(+)
+ 2 files changed, 317 insertions(+)
  create mode 100644 GNUmakefile
  create mode 100755 binpatch-version.pl
 
 diff --git a/GNUmakefile b/GNUmakefile
 new file mode 100644
-index 00000000..1570d2f9
+index 00000000..b2a91902
 --- /dev/null
 +++ b/GNUmakefile
-@@ -0,0 +1,255 @@
+@@ -0,0 +1,260 @@
 +
 +# ln -sr pick-changes/GNUmakefile .
 +
@@ -92,6 +92,11 @@ index 00000000..1570d2f9
 +			exit 1
 +		;; *)	die "arg '$(ARGS)' not '1', '2' nor '3'"
 +		esac
++#		# wlroots needed every now and then (until updated in distro)
++		test -d ../subprojects-cache/wlroots &&
++		test ! -e subprojects/wlroots && {
++			ln -sr ../subprojects-cache/wlroots subprojects
++		}
 +		it=`date +%s`
 +		x time meson setup -Dxwayland=enabled $$arg build/
 +	fi
