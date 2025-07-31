@@ -1,4 +1,4 @@
-From 6db6d87397f08465897a4441ec58e359131c746f Mon Sep 17 00:00:00 2001
+From c962cc55e49bd591aa0d3cd8a98f136a2011e570 Mon Sep 17 00:00:00 2001
 From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Sun, 31 Mar 2024 22:12:08 +0300
 Subject: [PATCH] x moveDelta (vtwm), dragThreshold (openbox) -- 4
@@ -12,10 +12,10 @@ they still be interested... :D)
  1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/src/input/cursor.c b/src/input/cursor.c
-index 2963ceff..cfde77eb 100644
+index 0fc2bbd0..45bb0d83 100644
 --- a/src/input/cursor.c
 +++ b/src/input/cursor.c
-@@ -573,6 +573,8 @@ cursor_get_resize_edges(struct wlr_cursor *cursor, struct cursor_context *ctx)
+@@ -597,6 +597,8 @@ cursor_get_resize_edges(struct wlr_cursor *cursor, struct cursor_context *ctx)
  	return resize_edges;
  }
  
@@ -24,7 +24,7 @@ index 2963ceff..cfde77eb 100644
  bool
  cursor_process_motion(struct server *server, uint32_t time, double *sx, double *sy)
  {
-@@ -599,6 +601,12 @@ cursor_process_motion(struct server *server, uint32_t time, double *sx, double *
+@@ -623,6 +625,12 @@ cursor_process_motion(struct server *server, uint32_t time, double *sx, double *
  		dnd_icons_move(seat, seat->cursor->x, seat->cursor->y);
  	}
  
@@ -36,8 +36,8 @@ index 2963ceff..cfde77eb 100644
 +
  	struct mousebind *mousebind;
  	wl_list_for_each(mousebind, &rc.mousebinds, link) {
- 		if (mousebind->mouse_event == MOUSE_ACTION_DRAG
-@@ -612,7 +620,7 @@ cursor_process_motion(struct server *server, uint32_t time, double *sx, double *
+ 		if (ctx.type == LAB_SSD_CLIENT
+@@ -640,7 +648,7 @@ cursor_process_motion(struct server *server, uint32_t time, double *sx, double *
  			actions_run(seat->pressed.view, server,
  				&mousebind->actions, &seat->pressed);
  		}
@@ -46,7 +46,7 @@ index 2963ceff..cfde77eb 100644
  
  	struct wlr_surface *old_focused_surface =
  		seat->seat->pointer_state.focused_surface;
-@@ -924,6 +932,7 @@ handle_release_mousebinding(struct server *server,
+@@ -986,6 +994,7 @@ process_release_mousebinding(struct server *server,
  			default:
  				continue;
  			}
@@ -54,7 +54,7 @@ index 2963ceff..cfde77eb 100644
  			actions_run(ctx->view, server, &mousebind->actions, ctx);
  		}
  	}
-@@ -982,6 +991,9 @@ handle_press_mousebinding(struct server *server, struct cursor_context *ctx,
+@@ -1048,6 +1057,9 @@ process_press_mousebinding(struct server *server, struct cursor_context *ctx,
  				&& modifiers == mousebind->modifiers) {
  			switch (mousebind->mouse_event) {
  			case MOUSE_ACTION_DRAG: /* fallthrough */
@@ -64,7 +64,7 @@ index 2963ceff..cfde77eb 100644
  			case MOUSE_ACTION_CLICK:
  				/*
  				 * DRAG and CLICK actions will be processed on
-@@ -1009,6 +1021,7 @@ handle_press_mousebinding(struct server *server, struct cursor_context *ctx,
+@@ -1075,6 +1087,7 @@ process_press_mousebinding(struct server *server, struct cursor_context *ctx,
  			}
  			consumed_by_frame_context |= mousebind->context == LAB_SSD_FRAME;
  			consumed_by_frame_context |= mousebind->context == LAB_SSD_ALL;
@@ -73,5 +73,5 @@ index 2963ceff..cfde77eb 100644
  		}
  	}
 -- 
-2.49.0
+2.50.1
 

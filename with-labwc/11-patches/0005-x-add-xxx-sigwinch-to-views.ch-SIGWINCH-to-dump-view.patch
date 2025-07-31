@@ -1,22 +1,22 @@
-From 138ae0916931267f5c7400d3482df6c3f80775c4 Mon Sep 17 00:00:00 2001
+From 2a4957f74b51dca81baa9a3363d9b28dbc960647 Mon Sep 17 00:00:00 2001
 From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Mon, 25 Mar 2024 16:38:25 +0200
 Subject: [PATCH] x add xxx-sigwinch-to-views.ch - SIGWINCH to dump views to a
  file
 
 ---
- include/xxx/xxx-sigwinch-to-views.ch | 107 +++++++++++++++++++++++++++
+ include/xxx/xxx-sigwinch-to-views.ch | 111 +++++++++++++++++++++++++++
  src/osd-field.c                      |   4 +
  src/server.c                         |   5 ++
- 3 files changed, 116 insertions(+)
+ 3 files changed, 120 insertions(+)
  create mode 100644 include/xxx/xxx-sigwinch-to-views.ch
 
 diff --git a/include/xxx/xxx-sigwinch-to-views.ch b/include/xxx/xxx-sigwinch-to-views.ch
 new file mode 100644
-index 00000000..023a55c2
+index 00000000..8ba53f37
 --- /dev/null
 +++ b/include/xxx/xxx-sigwinch-to-views.ch
-@@ -0,0 +1,107 @@
+@@ -0,0 +1,111 @@
 +// -*- mode: c; c-file-style: "linux" -*- //
 +
 +// temporary hacks, not expected to be around too long(*)
@@ -28,10 +28,14 @@ index 00000000..023a55c2
 +#endif
 +#define XXX_SIGWINCH_TO_VIEWS_CH 1
 +
-+// add includes on demand...
++// add more includes on demand...
 +
 +#ifdef XXX_CODE_FOR_SERVER_C
 +#include <fcntl.h>
++#endif
++
++#ifdef XXX_CODE_FOR_OSD_FIELD_C
++#include <unistd.h>
 +#endif
 +
 +int xxx_open_f4w(char chr1, char chr2);
@@ -125,10 +129,10 @@ index 00000000..023a55c2
 +}
 +#endif // XXX_CODE_FOR_OSD_FIELD_C
 diff --git a/src/osd-field.c b/src/osd-field.c
-index 7465d267..89c89062 100644
+index c27b9379..db02238c 100644
 --- a/src/osd-field.c
 +++ b/src/osd-field.c
-@@ -388,3 +388,7 @@ osd_field_free(struct window_switcher_field *field)
+@@ -381,3 +381,7 @@ osd_field_free(struct window_switcher_field *field)
  	zfree(field->format);
  	zfree(field);
  }
@@ -137,10 +141,10 @@ index 7465d267..89c89062 100644
 +#include "xxx/xxx-sigwinch-to-views.ch"
 +#undef XXX_CODE_FOR_OSD_FIELD_C
 diff --git a/src/server.c b/src/server.c
-index 9e87655e..8ea1ec88 100644
+index a9e021dc..874b1776 100644
 --- a/src/server.c
 +++ b/src/server.c
-@@ -51,6 +51,10 @@
+@@ -69,6 +69,10 @@
  #include "workspaces.h"
  #include "xwayland.h"
  
@@ -151,7 +155,7 @@ index 9e87655e..8ea1ec88 100644
  #define LAB_EXT_DATA_CONTROL_VERSION 1
  #define LAB_EXT_FOREIGN_TOPLEVEL_LIST_VERSION 1
  #define LAB_WLR_COMPOSITOR_VERSION 6
-@@ -737,6 +741,7 @@ server_start(struct server *server)
+@@ -747,6 +751,7 @@ server_start(struct server *server)
  	} else {
  		wlr_log(WLR_DEBUG, "WAYLAND_DISPLAY=%s", socket);
  	}
@@ -160,5 +164,5 @@ index 9e87655e..8ea1ec88 100644
  
  void
 -- 
-2.49.0
+2.50.1
 
