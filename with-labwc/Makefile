@@ -113,12 +113,12 @@ apply:  # apply patches from ./11-patches/ to worktree
 	exec git describe --dirty
 
 .PHONY: fwa
-fwa:    # * shortcut fetch, mkwt and apply *
+fwa:    # * shortcut fetch, mkwt and apply (@{u} or C=...) *
 	test '$(.VARIABLES)' || exit 0
-	make fetch
-	make mkwt .
+	$(MAKE) fetch $(MAKEOVERRIDES)
+	$(MAKE) mkwt . $(MAKEOVERRIDES)
 	exec \
-	make apply .
+	$(MAKE) apply . $(MAKEOVERRIDES)
 
 .PHONY: lspz
 lspz:   # list patches if arg: # of lines (e.g. 1, 4, 999)
