@@ -6,7 +6,7 @@ Subject: [PATCH] x add xxx-sigwinch-to-views.ch - SIGWINCH to dump views to a
 
 ---
  include/xxx/xxx-sigwinch-to-views.ch | 111 +++++++++++++++++++++++++++
- src/osd-field.c                      |   4 +
+ src/osd/osd-field.c                  |   4 +
  src/server.c                         |   5 ++
  3 files changed, 120 insertions(+)
  create mode 100644 include/xxx/xxx-sigwinch-to-views.ch
@@ -128,10 +128,10 @@ index 00000000..8ba53f37
 +	close(fd);
 +}
 +#endif // XXX_CODE_FOR_OSD_FIELD_C
-diff --git a/src/osd-field.c b/src/osd-field.c
+diff --git a/src/osd/osd-field.c b/src/osd/osd-field.c
 index c27b9379..db02238c 100644
---- a/src/osd-field.c
-+++ b/src/osd-field.c
+--- a/src/osd/osd-field.c
++++ b/src/osd/osd-field.c
 @@ -381,3 +381,7 @@ osd_field_free(struct window_switcher_field *field)
  	zfree(field->format);
  	zfree(field);
