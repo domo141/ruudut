@@ -177,15 +177,15 @@ static struct {
     int size;
     //
     u_short loc_ws;	// workspace
-    u_short loc_d1;	// mday
-    u_short loc_d2;
-    u_short loc_wd;	// wday
     u_short loc_h1;	// hour
     u_short loc_h2;
     u_short loc_m1;	// minute
     u_short loc_m2;
     u_short loc_s1;	// second
     u_short loc_s2;
+    u_short loc_wd;	// wday
+    u_short loc_d1;	// mday
+    u_short loc_d2;
     u_short loc_w0;	// week nr (+/-nn)
     u_short loc_w1;
     u_short loc_w2;
@@ -412,18 +412,19 @@ static void buffer_dimensions(void)
     if (na.w < 2) na.w = 2;
     na.nr += na.nl;
     B.loc_ws = w * 3 / 4;
-    B.loc_d1 = B.loc_ws + w + na.w;
-    B.loc_d2 = B.loc_d1 + w;
-    B.loc_wd = B.loc_d2 + w + na.w;
 
-    B.loc_h1 = B.loc_wd + V.glywd + na.w;
+    B.loc_h1 = B.loc_ws + w + na.w;
     B.loc_h2 = B.loc_h1 + w;
     B.loc_m1 = B.loc_h2 + w + V.glywc - na.nr;
     B.loc_m2 = B.loc_m1 + w;
     B.loc_s1 = B.loc_m2 + w + V.glywc - na.nr;
     B.loc_s2 = B.loc_s1 + w;
 
-    B.loc_w0 = B.loc_s2 + w + na.w;
+    B.loc_wd = B.loc_s2 + w + na.w;
+    B.loc_d1 = B.loc_wd + V.glywd + na.w;
+    B.loc_d2 = B.loc_d1 + w;
+
+    B.loc_w0 = B.loc_d2 + w + na.w;
     B.loc_w1 = B.loc_w0 + V.glyww;
     B.loc_w2 = B.loc_w1 + w;
 
@@ -476,7 +477,7 @@ static struct wl_buffer * create_buffer(void)
     BB;
     draw_txti(V.off_colon, V.glywc, B.loc_h2 + V.glywn - na.nl);
     draw_txti(V.off_colon, V.glywc, B.loc_m2 + V.glywn - na.nl);
-    draw_txti(V.off_w, V.glyww, B.loc_s2 + V.glywn + na.w);
+    draw_txti(V.off_w, V.glyww, B.loc_w0);
     draw_txti(V.off_dsep, V.glywc, B.loc_b2 + V.glywn - na.nl);
     BE;
 
