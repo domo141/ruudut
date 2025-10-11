@@ -476,7 +476,7 @@ static struct wl_buffer * create_buffer(void)
     BB;
     draw_txti(V.off_colon, V.glywc, B.loc_h2 + V.glywn - na.nl);
     draw_txti(V.off_colon, V.glywc, B.loc_m2 + V.glywn - na.nl);
-    draw_txti(V.off_w, V.glyww, B.loc_s2 + V.glywn + na.w);
+    draw_txti(V.off_w, V.glyww, B.loc_w0);
     draw_txti(V.off_dsep, V.glywc, B.loc_b2 + V.glywn - na.nl);
     BE;
 
