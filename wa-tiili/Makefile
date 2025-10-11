@@ -25,6 +25,7 @@ help:
 	$(info )
 
 all: $(BD)/tiili
+	ls -l $<
 
 CC = cc
 #CFLAGS = -std=c11 -ggdb

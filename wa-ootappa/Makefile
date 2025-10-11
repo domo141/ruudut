@@ -23,6 +23,7 @@ help:
 
 .PHONY: all
 all: $(BD)/ootappa
+	ls -l $<
 
 N_CH = $(BD)/numbrle.ch
 
