@@ -5,7 +5,7 @@
 # multitool-tmpl3.sh -- perhaps the best of these in multitool-tmpl series
 #
 # Created: Tue 02 Apr 2024 19:39:56 EEST too
-# Last modified: Wed 02 Apr 2025 20:28:30 +0300 too
+# Last modified: Sat 11 Oct 2025 14:31:43 +0300 too
 #
 # SPDX-License-Identifier: Unlicense
 #
@@ -133,18 +133,30 @@ cmds=$cmds'
 cmd_pngshrink shrink png image (to post-tune screenshot)'
 cmd_pngshrink ()
 {
-	test $# = 2 || usage "origpng shrinkedpng"
+	test $# -ge 2 ||
+	  usage "origpng shrinkedpng [pngquant options]" '' \
+		'Without pngquant options "conversion" lossless' '' \
+		"'' as pngquant options will run pngquant (once) w/o options"\
+		"Otherwise pngquant run twice - first that optionless run" ''\
+	'Some tried potentially effective pngquant options:' '' \
+	" 64 (or any other value) - number of colors reduced to 'num'" \
+	" --posterize 4 --nofs    - another way to reduce... use w/ 'num'"
 
 	command -v optipng >/dev/null  || die "'optipng': no such command"
-	#command -v pngquant >/dev/null || die "'pngquant': no such command"
+	test $# -le 2 || command -v pngquant >/dev/null ||
+		die "'pngquant': no such command"
 
 	test -f "$1" || die "'$1' input file missing"
 	test -e "$2" && die "'$2' output file exists"
-	ifile=$1 ofile=$2 #; shift 2
+	ifile=$1 ofile=$2; shift 2
 
 	trap 'x rm -f "$ofile.wip"' 0
-	#x pngquant -f -o "$ofile.wip" "$ifile"
-	cp $ifile $ofile.wip
+	if test $# = 0
+	then x cp $ifile $ofile.wip
+	else x pngquant -f -o "$ofile.wip" "$ifile"
+	fi
+	test "${1-}" && x pngquant -f -o "$ofile.wip" "$@" "$ofile.wip"
+
 	x optipng --strip all -o9 "$ofile.wip"
 	s1=`stat -c %s "$ifile"`
 	s2=`stat -c %s "$ofile.wip"`
