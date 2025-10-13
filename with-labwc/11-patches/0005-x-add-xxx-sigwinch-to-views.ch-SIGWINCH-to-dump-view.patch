@@ -105,7 +105,7 @@ index 00000000..8ba53f37
 +		}
 +		int l = snprintf(buf + bp, sizeof buf - bp,
 +				 "%u %s %s\n", c,
-+				 get_app_id_or_class(view, /*trim*/ true),
++				 get_identifier(view, /*trim*/ true),
 +				 get_title_if_different(view));
 +		bp += l;
 +		if (bp > sizeof buf - 512) {
