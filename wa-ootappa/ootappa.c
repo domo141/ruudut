@@ -1,7 +1,7 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
 // Created: Mon 03 Mar 22:00:58 EET 2025 too
-// Last Modified: Wed 12 Mar 2025 07:34:50 +0200 too
+// Last Modified: Wed 15 Oct 2025 21:45:49 +0300 too
 
 #define _POSIX_C_SOURCE 200112L
 #include "more-warnings.h"
@@ -244,7 +244,7 @@ static void layer_surface_configure(void * data,
 #if 0
 	wl_region_add(wl_region, 2, 0, B.width - 4, B.height / 3);
 #else
-	wl_region_add(wl_region, 2, 0, B.width, B.height);
+	wl_region_add(wl_region, 0, 0, B.width, B.height);
 #endif
 	wl_surface_set_input_region(wl_surface, wl_region);
 	wl_surface_commit(wl_surface);
