@@ -1,14 +1,14 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
 // Created: Mon 03 Mar 22:00:58 EET 2025 too
-// Last Modified: Wed 15 Oct 2025 22:24:24 +0300 too
+// Last Modified: Fri 17 Oct 2025 20:21:40 +0300 too
 
 #define _POSIX_C_SOURCE 200112L
 #include "more-warnings.h"
 
 #include <unistd.h>
 #include <stdio.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 //#include <stdbool.h>
 #include <string.h>
 #include <errno.h>
@@ -99,7 +99,7 @@ static void noop(/* ... */) { } // do nothing, fill in listener structs
 static void xdg_wm_base_ping(void * UU(data),
 			     struct xdg_wm_base *_xdg_wm_base, uint32_t serial)
 {
-    //printf("ping - pong %u\n", serial);
+    //printf("%s(): pong %d\n", __func__, serial);
     xdg_wm_base_pong(_xdg_wm_base, serial);
 }
 
@@ -146,7 +146,9 @@ static struct wl_buffer * create_buffer(void)
 	close(fd);
 	return NULL;
     }
-    B.cntr = B.data + 127 * B.diam + 127;
+    //B.cntr = B.data + (B.diam / 2 - 1) * B.diam + (B.diam / 2 - 1)
+
+    B.cntr = B.data + (B.diam + 1) * (B.diam / 2 - 1);
 
     struct wl_shm_pool * pool = wl_shm_create_pool(wl_shm, fd, B.size);
     wl_buffer = wl_shm_pool_create_buffer(
@@ -175,7 +177,7 @@ static struct wl_buffer * create_buffer(void)
 	    int p = x * x + y * y;
 	    if (p < r2) {
 		int xx = x + 1;
-		uint32_t col = (p + 256 > r2)? 0xffffffff: 0xff0000ff;
+		uint32_t col = (p + 2 * B.diam > r2)? 0xffffffff: 0xff0000ff;
 		B.cntr[xx + B.diam * yy] = col;
 		B.cntr[xx - B.diam * y] = col;
 		B.cntr[-x + B.diam * yy] = col;
@@ -194,7 +196,7 @@ static void xdg_surface_configure(void * data,
 				  struct xdg_surface * xdg_surface,
 				  uint32_t serial)
 {
-    //printf("%s: %d\n", __func__, serial);
+    //printf("%s(): %d\n", __func__, serial);
     xdg_surface_ack_configure(xdg_surface, serial);
     if (wl_buffer == NULL) {
 	// xxx temp __auto_type test...
@@ -263,7 +265,7 @@ static void wl_registry_global(void * UU(data),
 			       uint32_t name, const char * interface,
 			       uint32_t UU(version))
 {
-    printf("%p %s\n", interface, interface);
+    //printf("%s(): %p %s\n", __func__, interface, interface);
 
     if (strcmp(interface, wl_shm_interface.name) == 0) {
 	wl_shm = wl_registry_bind(wl_registry, name, &wl_shm_interface, 1);
@@ -310,8 +312,19 @@ static int xwl_display_dispatch(struct wl_display *display)
 #define wl_display_dispatch xwl_display_dispatch
 #endif
 
-int main(int UU(argc), char ** UU(argv))
+int main(int argc, char ** argv)
 {
+    if (argc > 1) {
+	int s = atoi(argv[1]);
+	if (s > 0) {
+	    /**/ if (s < 32) s = 32;
+	    else if (s > 1024) s = 1024;
+	    else s = (s + 1) & ~1;
+	    B.diam = s;
+	    B.stride = s * 4;
+	    B.size = s * s * 4;
+	}
+    }
     struct wl_display * wl_display = wl_display_connect(NULL);
     BB;
     struct wl_registry * wl_registry = wl_display_get_registry(wl_display);
@@ -347,9 +360,12 @@ int main(int UU(argc), char ** UU(argv))
 
     // three hours for now -- to be configured later...
     alarm(10800);
-
-    printf("\nlorvi - versio 0.6-mvp\n\n");
-
+    BB;
+    time_t t = time(NULL);
+    struct tm * tm = localtime(&t);
+    printf("\nlorvi - versio 0.7-mvp - %02d:%02d:%02d: alarm (exit in) 3h\n\n",
+	   tm->tm_hour,tm->tm_min, tm->tm_sec);
+    BE;
     while (wl_display_dispatch(wl_display) > 0) {
 	//
     }
