@@ -1,7 +1,7 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
 // Created: Mon 03 Mar 22:00:58 EET 2025 too
-// Last Modified: Fri 17 Oct 2025 20:21:40 +0300 too
+// Last Modified: Sat 18 Oct 2025 23:04:27 +0300 too
 
 #define _POSIX_C_SOURCE 200112L
 #include "more-warnings.h"
@@ -168,24 +168,71 @@ static struct wl_buffer * create_buffer(void)
     BE;
 #endif
     BB;
-    // simple way to do initial filled circle
-    int r2 = B.diam * B.diam / 4;
+    int width = B.diam;
+    B.diam--; B.diam--;
 
-    for (int y = B.diam / 2 - 1; y >= 0; y--) {
+    // simple way to do initial filled circle
+    int rsq = B.diam * B.diam / 4 ;//- B.diam;
+    int r = B.diam / 2 - 1 + 1;
+
+    for (int y = 0; y < r; y++) {
 	int yy = y + 1;
-	for (int x = B.diam / 2 - 1; x >= 0; x--) {
+	for (int x = 0; x < r; x++) {
 	    int p = x * x + y * y;
-	    if (p < r2) {
-		int xx = x + 1;
-		uint32_t col = (p + 2 * B.diam > r2)? 0xffffffff: 0xff0000ff;
-		B.cntr[xx + B.diam * yy] = col;
-		B.cntr[xx - B.diam * y] = col;
-		B.cntr[-x + B.diam * yy] = col;
-		B.cntr[-x - B.diam * y] = col;
-	    }
+	    if (p >= rsq)
+		break;
+	    int xx = x + 1;
+	    //nt32_t col = (p + 2 * B.diam > rsq)? 0xffff0000: 0xff0000ff;
+	    uint32_t col = 0xff0000ff;
+	    B.cntr[xx + width * yy] = col;
+	    B.cntr[xx - width * y] = col;
+	    B.cntr[-x + width * yy] = col;
+	    B.cntr[-x - width * y] = col;
+	}
+    }
+    B.diam = width;
+    BE;
+    BB; // Jesko's method to do circle
+    int r = B.diam / 2 - 1;
+    int t1 = r / 2; // tried //2, //4, //8, //16, //32 and just 0...
+    int x = r;      // \- small circles look better with larger initial t1's
+    int y = 0;
+
+    while (x >= y) {
+	//printf("-- %d %d\n", x, y);
+	B.cntr[+x+0 + B.diam * (y+1)] = 0xffffffff; // 3
+	B.cntr[+x+1 + B.diam * (y+1)] = 0xffffffff;
+
+	B.cntr[+x+0 - B.diam * (y+0)] = 0xffffffff; // 2
+	B.cntr[+x+1 - B.diam * (y+0)] = 0xffffffff;
+
+	B.cntr[-x+0 + B.diam * (y+1)] = 0xffffffff; // 6
+	B.cntr[-x+1 + B.diam * (y+1)] = 0xffffffff;
+
+	B.cntr[-x+0 - B.diam * (y+0)] = 0xffffffff; // 7
+	B.cntr[-x+1 - B.diam * (y+0)] = 0xffffffff;
+	// -- //
+	B.cntr[+y+1 + B.diam * (x+0)] = 0xffffffff; // 4
+	B.cntr[+y+1 + B.diam * (x+1)] = 0xffffffff;
+
+	B.cntr[-y+0 + B.diam * (x+0)] = 0xffffffff; // 5
+	B.cntr[-y+0 + B.diam * (x+1)] = 0xffffffff;
+
+	B.cntr[+y+1 - B.diam * (x+0)] = 0xffffffff; // 1
+	B.cntr[+y+1 - B.diam * (x-1)] = 0xffffffff;
+
+	B.cntr[-y+0 - B.diam * (x+0)] = 0xffffffff; // 8
+	B.cntr[-y+0 - B.diam * (x-1)] = 0xffffffff;
+	y = y + 1;
+	t1 = t1 + y;
+	int t2 = t1 - x;
+	if (t2 >= 0) {
+	    t1 = t2;
+	    x = x - 1;
 	}
     }
     BE;
+
     //wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, NULL);
     return wl_buffer;
 }
@@ -363,7 +410,7 @@ int main(int argc, char ** argv)
     BB;
     time_t t = time(NULL);
     struct tm * tm = localtime(&t);
-    printf("\nlorvi - versio 0.7-mvp - %02d:%02d:%02d: alarm (exit in) 3h\n\n",
+    printf("\nlorvi - versio 0.7-mvp - %02d:%02d:%02d: alarm (exit in) 3h\n",
 	   tm->tm_hour,tm->tm_min, tm->tm_sec);
     BE;
     while (wl_display_dispatch(wl_display) > 0) {
