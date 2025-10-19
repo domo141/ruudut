@@ -1,7 +1,7 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
 // Created: Mon 03 Mar 22:00:58 EET 2025 too
-// Last Modified: Sat 18 Oct 2025 23:04:27 +0300 too
+// Last Modified: Sun 19 Oct 2025 21:29:59 +0300 too
 
 #define _POSIX_C_SOURCE 200112L
 #include "more-warnings.h"
@@ -9,13 +9,14 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <stdbool.h>
+#include <stdbool.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <time.h>
 #include <wayland-client.h>
+#include <linux/input-event-codes.h> // for BTN_LEFT
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual"
@@ -24,6 +25,10 @@
 #include "idle-inhibit-unstable-v1-client-protocol.h"
 
 #pragma GCC diagnostic pop
+
+#if 1
+#define printf(...) do {} while (0)
+#endif
 
 #if defined (__GNUC__) && __GNUC__ >= 4
 #define UU(x) x ## _unused __attribute__ ((unused))
@@ -113,7 +118,6 @@ static struct wl_compositor * wl_compositor;
 
 static struct zwp_idle_inhibit_manager_v1 * zwp_idle_inhibit_manager;
 
-#if 0
 static bool wl_buffer_released;
 static void wl_buffer_release(void * UU(data),
 			      struct wl_buffer * UU(wl_buffer))
@@ -124,56 +128,86 @@ static void wl_buffer_release(void * UU(data),
 static const struct wl_buffer_listener wl_buffer_listener = {
     .release = wl_buffer_release,
 };
-#endif
 
 static struct {
     uint32_t * data;
     uint32_t * cntr;
     int diam;
-    int stride;
-    int size;
-} B = { NULL, NULL, 256, 256 * 4, 256 * 256 * 4 };
+    int r;
+} B = { NULL, NULL, 256, 127 };
+
+static void draw_circle(uint32_t color) // Jesko's method to do circle
+{
+    const int width = B.diam;
+    const int r = B.r;
+    int t1 = r / 2; // tried //2, //4, //8, //16, //32 and just 0...
+    int x = r;      // \- small circles look better with larger initial t1's
+    int y = 0;
+
+    while (x >= y) {
+	//printf("-- %d %d\n", x, y);
+	B.cntr[+x+0 + width * (y+1)] = color; // 3
+	B.cntr[+x+1 + width * (y+1)] = color;
+
+	B.cntr[+x+0 - width * (y+0)] = color; // 2
+	B.cntr[+x+1 - width * (y+0)] = color;
+
+	B.cntr[-x+0 + width * (y+1)] = color; // 6
+	B.cntr[-x+1 + width * (y+1)] = color;
+
+	B.cntr[-x+0 - width * (y+0)] = color; // 7
+	B.cntr[-x+1 - width * (y+0)] = color;
+	// -- //
+	B.cntr[+y+1 + width * (x+0)] = color; // 4
+	B.cntr[+y+1 + width * (x+1)] = color;
+
+	B.cntr[-y+0 + width * (x+0)] = color; // 5
+	B.cntr[-y+0 + width * (x+1)] = color;
+
+	B.cntr[+y+1 - width * (x+0)] = color; // 1
+	B.cntr[+y+1 - width * (x-1)] = color;
+
+	B.cntr[-y+0 - width * (x+0)] = color; // 8
+	B.cntr[-y+0 - width * (x-1)] = color;
+	y = y + 1;
+	t1 = t1 + y;
+	int t2 = t1 - x;
+	if (t2 >= 0) {
+	    t1 = t2;
+	    x = x - 1;
+	}
+    }
+}
 
 static struct wl_buffer * wl_buffer;
 static struct wl_buffer * create_buffer(void)
 {
-    int fd = allocate_shm_file(B.size);
+    const int size = B.diam * B.diam * 4;
+    int fd = allocate_shm_file(size);
     if (fd < 0) {
 	return NULL;
     }
-    B.data = mmap(NULL, B.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    B.data = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (B.data == MAP_FAILED) {
 	close(fd);
 	return NULL;
     }
-    //B.cntr = B.data + (B.diam / 2 - 1) * B.diam + (B.diam / 2 - 1)
+    //cntr = B.data + (B.diam / 2 - 1) * B.diam + (B.diam / 2 - 1)
+    //B.cntr = B.data + (B.diam + 1) * (B.diam / 2 - 1);
 
-    B.cntr = B.data + (B.diam + 1) * (B.diam / 2 - 1);
+    const int width = B.diam;
+    const int r = B.r;
+    B.cntr = B.data + (width + 1) * r; // deduced from above
 
-    struct wl_shm_pool * pool = wl_shm_create_pool(wl_shm, fd, B.size);
+    struct wl_shm_pool * pool = wl_shm_create_pool(wl_shm, fd, size);
+    const int stride = B.diam * 4;
     wl_buffer = wl_shm_pool_create_buffer(
-	pool, 0, B.diam, B.diam, B.stride, WL_SHM_FORMAT_ARGB8888);
+	pool, 0, B.diam, B.diam, stride, WL_SHM_FORMAT_ARGB8888);
     wl_shm_pool_destroy(pool);
     close(fd);
 
-#if 0
-    BB;
-    int i;
-    for (i = 0; i < B.diam; i++) B.data[i] = 0xff00ffff;
-    for (; i < B.size / 4 - B.diam; i++) B.data[i] = 0xffff0000;
-    for (; i < B.size / 4; i++) B.data[i] = 0xff00ffff;
-    for (i = 0; i < B.size / 4; i += B.diam) {
-	B.data[i] = B.data[i + B.diam - 1] = 0xff00ffff;
-    }
-    BE;
-#endif
-    BB;
-    int width = B.diam;
-    B.diam--; B.diam--;
-
-    // simple way to do initial filled circle
-    int rsq = B.diam * B.diam / 4 ;//- B.diam;
-    int r = B.diam / 2 - 1 + 1;
+    // simple way to do initial *filled* circle
+    const int rsq = r * r;
 
     for (int y = 0; y < r; y++) {
 	int yy = y + 1;
@@ -183,57 +217,16 @@ static struct wl_buffer * create_buffer(void)
 		break;
 	    int xx = x + 1;
 	    //nt32_t col = (p + 2 * B.diam > rsq)? 0xffff0000: 0xff0000ff;
-	    uint32_t col = 0xff0000ff;
+	    const uint32_t col = 0xff0000ff;
 	    B.cntr[xx + width * yy] = col;
 	    B.cntr[xx - width * y] = col;
 	    B.cntr[-x + width * yy] = col;
 	    B.cntr[-x - width * y] = col;
 	}
     }
-    B.diam = width;
-    BE;
-    BB; // Jesko's method to do circle
-    int r = B.diam / 2 - 1;
-    int t1 = r / 2; // tried //2, //4, //8, //16, //32 and just 0...
-    int x = r;      // \- small circles look better with larger initial t1's
-    int y = 0;
+    draw_circle(0xffffffff); // outline //
 
-    while (x >= y) {
-	//printf("-- %d %d\n", x, y);
-	B.cntr[+x+0 + B.diam * (y+1)] = 0xffffffff; // 3
-	B.cntr[+x+1 + B.diam * (y+1)] = 0xffffffff;
-
-	B.cntr[+x+0 - B.diam * (y+0)] = 0xffffffff; // 2
-	B.cntr[+x+1 - B.diam * (y+0)] = 0xffffffff;
-
-	B.cntr[-x+0 + B.diam * (y+1)] = 0xffffffff; // 6
-	B.cntr[-x+1 + B.diam * (y+1)] = 0xffffffff;
-
-	B.cntr[-x+0 - B.diam * (y+0)] = 0xffffffff; // 7
-	B.cntr[-x+1 - B.diam * (y+0)] = 0xffffffff;
-	// -- //
-	B.cntr[+y+1 + B.diam * (x+0)] = 0xffffffff; // 4
-	B.cntr[+y+1 + B.diam * (x+1)] = 0xffffffff;
-
-	B.cntr[-y+0 + B.diam * (x+0)] = 0xffffffff; // 5
-	B.cntr[-y+0 + B.diam * (x+1)] = 0xffffffff;
-
-	B.cntr[+y+1 - B.diam * (x+0)] = 0xffffffff; // 1
-	B.cntr[+y+1 - B.diam * (x-1)] = 0xffffffff;
-
-	B.cntr[-y+0 - B.diam * (x+0)] = 0xffffffff; // 8
-	B.cntr[-y+0 - B.diam * (x-1)] = 0xffffffff;
-	y = y + 1;
-	t1 = t1 + y;
-	int t2 = t1 - x;
-	if (t2 >= 0) {
-	    t1 = t2;
-	    x = x - 1;
-	}
-    }
-    BE;
-
-    //wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, NULL);
+    wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, NULL);
     return wl_buffer;
 }
 
@@ -264,6 +257,8 @@ static const struct xdg_surface_listener xdg_surface_listener = {
 
 // pointer //
 
+uint32_t ccolor[2] = { 0xffffffff, 0xffffffff };
+
 static void wl_pointer_enter(void * UU(data),
 			     struct wl_pointer * UU(wl_pointer),
 			     uint32_t UU(serial),
@@ -272,6 +267,7 @@ static void wl_pointer_enter(void * UU(data),
 			     wl_fixed_t UU(surface_y))
 {
     printf("enter %d %d\n", surface_x_unused, surface_y_unused);
+    ccolor[1] = 0xff00ff00;
 }
 
 static void wl_pointer_leave(void * UU(data),
@@ -280,13 +276,27 @@ static void wl_pointer_leave(void * UU(data),
 			     struct wl_surface * UU(surface))
 {
     printf("leave\n");
+    ccolor[1] = 0xffffffff;
+}
+
+uint32_t pct = 0;
+static void wl_pointer_button(void * UU(data),
+			      struct wl_pointer * UU(wl_pointer),
+			      uint32_t UU(serial), uint32_t mtime,
+			      uint32_t button, uint32_t state)
+{
+    printf("button %x %d %d\n", button, state, mtime);
+    if (button == BTN_LEFT &&
+	state == WL_POINTER_BUTTON_STATE_PRESSED &&
+	mtime - pct < 200) exit(0);
+    pct = mtime;
 }
 
 struct wl_pointer_listener wl_pointer_listener = {
     .enter = wl_pointer_enter,
     .leave = wl_pointer_leave,
     .motion = noop,
-    .button = noop,
+    .button = wl_pointer_button,
     .axis = noop,
     .frame = noop,
     .axis_source = noop,
@@ -368,8 +378,7 @@ int main(int argc, char ** argv)
 	    else if (s > 1024) s = 1024;
 	    else s = (s + 1) & ~1;
 	    B.diam = s;
-	    B.stride = s * 4;
-	    B.size = s * s * 4;
+	    B.r = s / 2 - 1;
 	}
     }
     struct wl_display * wl_display = wl_display_connect(NULL);
@@ -410,11 +419,22 @@ int main(int argc, char ** argv)
     BB;
     time_t t = time(NULL);
     struct tm * tm = localtime(&t);
-    printf("\nlorvi - versio 0.7-mvp - %02d:%02d:%02d: alarm (exit in) 3h\n",
+#undef printf
+    printf("\nlorvi - versio 0.8-mvp - %02d:%02d:%02d: alarm (exit in) 3h\n",
 	   tm->tm_hour,tm->tm_min, tm->tm_sec);
     BE;
     while (wl_display_dispatch(wl_display) > 0) {
-	//
+	if (wl_buffer_released == 0)
+	    continue;
+	if (ccolor[0] != ccolor[1]) {
+	    draw_circle(ccolor[1]);
+	    ccolor[0] = ccolor[1];
+	    wl_buffer_released = 0;
+	    wl_surface_attach(wl_surface, wl_buffer, 0, 0);
+	    wl_surface_damage_buffer(wl_surface, 0, 0, B.diam, B.diam);
+	    wl_surface_commit(wl_surface);
+	    wl_display_flush(wl_display); // expect data fits to (100K+) soc...
+	}
     }
 
     return 0;
