@@ -50,14 +50,16 @@ $(BD)/%-client-protocol.h: %.xml | $(BD)
 $(BD)/%-protocol.c: %.xml | $(BD)
 	wayland-scanner private-code $< $@
 
-ifdef D
+ifdef WLD
 $(info export WAYLAND_DEBUG=1)
 export WAYLAND_DEBUG=1
 endif
 
+DM = 128
+
 .PHONY: run
 run:	$(BD)/lorvi
-	$<
+	$< $(DM)
 
 .PHONY: vwoc	# view without comments (hacky imprecise approach but useful)
 vwoc:		# useful to view wayland protocol header files

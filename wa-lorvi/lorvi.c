@@ -1,7 +1,7 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
 // Created: Mon 03 Mar 22:00:58 EET 2025 too
-// Last Modified: Sun 19 Oct 2025 21:29:59 +0300 too
+// Last Modified: Sat 25 Oct 2025 17:06:04 +0300 too
 
 #define _POSIX_C_SOURCE 200112L
 #include "more-warnings.h"
@@ -26,9 +26,12 @@
 
 #pragma GCC diagnostic pop
 
-#if 1
-#define printf(...) do {} while (0)
+#if 0
+#define DF printf
+#else
+#define DF(...) do {} while (0)
 #endif
+#define DF1 printf
 
 #if defined (__GNUC__) && __GNUC__ >= 4
 #define UU(x) x ## _unused __attribute__ ((unused))
@@ -104,7 +107,7 @@ static void noop(/* ... */) { } // do nothing, fill in listener structs
 static void xdg_wm_base_ping(void * UU(data),
 			     struct xdg_wm_base *_xdg_wm_base, uint32_t serial)
 {
-    //printf("%s(): pong %d\n", __func__, serial);
+    //DF("%s(): pong %d\n", __func__, serial);
     xdg_wm_base_pong(_xdg_wm_base, serial);
 }
 
@@ -145,7 +148,7 @@ static void draw_circle(uint32_t color) // Jesko's method to do circle
     int y = 0;
 
     while (x >= y) {
-	//printf("-- %d %d\n", x, y);
+	//DF("-- %d %d\n", x, y);
 	B.cntr[+x+0 + width * (y+1)] = color; // 3
 	B.cntr[+x+1 + width * (y+1)] = color;
 
@@ -177,6 +180,76 @@ static void draw_circle(uint32_t color) // Jesko's method to do circle
 	    x = x - 1;
 	}
     }
+}
+
+static void draw_ii(uint32_t color)
+{
+    const int iw = B.diam / 8;
+    const int m = (B.diam + 12) / 16 * 2;
+    const int n = iw + m;
+    int ih = B.diam / 4;
+    int sw = iw / 2;
+    const int csw = sw = (iw & 1) ? (sw | 1) : (sw & 0xfffe);
+    uint32_t * cl = B.cntr - B.diam * ih - (m / 2) - iw + (iw - sw) / 2;
+
+    //DF1(": iw %d - ih %d - m %d - n %d - sw %d :\n", iw, ih, m, n, sw);
+    if (ih != iw * 2) ih++;
+
+    do {
+	for (int x = sw; x > 0; x--) {
+	    cl[x] = color;
+	    cl[x + n] = color;
+	}
+	cl += B.diam - 1;
+	sw += 2;
+    } while (sw < iw);
+
+    sw = csw;
+    for (unsigned y = sw; y > 0; y--) {
+	for (int x = iw; x > 0; x--) {
+	    cl[x] = color;
+	    cl[x + n] = color;
+	}
+	cl += B.diam;
+    }
+    sw = iw;
+    do {
+	for (int x = sw; x > 0; x--) {
+	    cl[x] = color;
+	    cl[x + n] = color;
+	}
+	cl += B.diam + 1;
+	sw -= 2;
+    } while (sw >= csw);
+
+    sw += 2;
+    cl += B.diam * (csw) - 1;
+    do {
+	for (int x = sw; x > 0; x--) {
+	    cl[x] = color;
+	    cl[x + n] = color;
+	}
+	cl += B.diam - 1;
+	sw += 2;
+    } while (sw < iw);
+
+    sw = csw;
+    for (unsigned y = ih; y > 0; y--) {
+	for (int x = iw; x > 0; x--) {
+	    cl[x] = color;
+	    cl[x + n] = color;
+	}
+	cl += B.diam;
+    }
+    sw = iw;
+    do {
+	for (int x = sw; x > 0; x--) {
+	    cl[x] = color;
+	    cl[x + n] = color;
+	}
+	cl += B.diam + 1;
+	sw -= 2;
+    } while (sw >= csw);
 }
 
 static struct wl_buffer * wl_buffer;
@@ -216,7 +289,8 @@ static struct wl_buffer * create_buffer(void)
 	    if (p >= rsq)
 		break;
 	    int xx = x + 1;
-	    //nt32_t col = (p + 2 * B.diam > rsq)? 0xffff0000: 0xff0000ff;
+	    //uint32_t col = (p + 2 * B.diam > rsq)? 0xffff0000: 0xff0000ff;
+	    //const uint32_t col = (y & 3 && x & 3)? 0xff0000ff: 0xff000088;
 	    const uint32_t col = 0xff0000ff;
 	    B.cntr[xx + width * yy] = col;
 	    B.cntr[xx - width * y] = col;
@@ -225,6 +299,7 @@ static struct wl_buffer * create_buffer(void)
 	}
     }
     draw_circle(0xffffffff); // outline //
+    draw_ii(0xffffffff); // the letters
 
     wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, NULL);
     return wl_buffer;
@@ -236,7 +311,7 @@ static void xdg_surface_configure(void * data,
 				  struct xdg_surface * xdg_surface,
 				  uint32_t serial)
 {
-    //printf("%s(): %d\n", __func__, serial);
+    //DF("%s(): %d\n", __func__, serial);
     xdg_surface_ack_configure(xdg_surface, serial);
     if (wl_buffer == NULL) {
 	// xxx temp __auto_type test...
@@ -266,7 +341,7 @@ static void wl_pointer_enter(void * UU(data),
 			     wl_fixed_t UU(surface_x),
 			     wl_fixed_t UU(surface_y))
 {
-    printf("enter %d %d\n", surface_x_unused, surface_y_unused);
+    DF("enter %d %d\n", surface_x_unused, surface_y_unused);
     ccolor[1] = 0xff00ff00;
 }
 
@@ -275,7 +350,7 @@ static void wl_pointer_leave(void * UU(data),
 			     uint32_t UU(serial),
 			     struct wl_surface * UU(surface))
 {
-    printf("leave\n");
+    DF("leave\n");
     ccolor[1] = 0xffffffff;
 }
 
@@ -285,7 +360,7 @@ static void wl_pointer_button(void * UU(data),
 			      uint32_t UU(serial), uint32_t mtime,
 			      uint32_t button, uint32_t state)
 {
-    printf("button %x %d %d\n", button, state, mtime);
+    DF("button %x %d %d\n", button, state, mtime);
     if (button == BTN_LEFT &&
 	state == WL_POINTER_BUTTON_STATE_PRESSED &&
 	mtime - pct < 200) exit(0);
@@ -322,7 +397,7 @@ static void wl_registry_global(void * UU(data),
 			       uint32_t name, const char * interface,
 			       uint32_t UU(version))
 {
-    //printf("%s(): %p %s\n", __func__, interface, interface);
+    //DF("%s(): %p %s\n", __func__, interface, interface);
 
     if (strcmp(interface, wl_shm_interface.name) == 0) {
 	wl_shm = wl_registry_bind(wl_registry, name, &wl_shm_interface, 1);
@@ -363,7 +438,7 @@ static const struct wl_registry_listener wl_registry_listener = {
 static int xwl_display_dispatch(struct wl_display *display)
 {
     int i = wl_display_dispatch(display);
-    printf("%s() -> %d\n", __func__, i);
+    DF("%s() -> %d\n", __func__, i);
     return i;
 }
 #define wl_display_dispatch xwl_display_dispatch
@@ -419,8 +494,7 @@ int main(int argc, char ** argv)
     BB;
     time_t t = time(NULL);
     struct tm * tm = localtime(&t);
-#undef printf
-    printf("\nlorvi - versio 0.8-mvp - %02d:%02d:%02d: alarm (exit in) 3h\n",
+    printf("\nlorvi - versio 0.9-mvp - %02d:%02d:%02d: alarm (exit in) 3h\n",
 	   tm->tm_hour,tm->tm_min, tm->tm_sec);
     BE;
     while (wl_display_dispatch(wl_display) > 0) {
@@ -428,6 +502,7 @@ int main(int argc, char ** argv)
 	    continue;
 	if (ccolor[0] != ccolor[1]) {
 	    draw_circle(ccolor[1]);
+	    draw_ii(ccolor[1]);
 	    ccolor[0] = ccolor[1];
 	    wl_buffer_released = 0;
 	    wl_surface_attach(wl_surface, wl_buffer, 0, 0);
