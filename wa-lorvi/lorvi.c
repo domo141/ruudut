@@ -1,7 +1,7 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
 // Created: Mon 03 Mar 22:00:58 EET 2025 too
-// Last Modified: Sat 25 Oct 2025 17:06:04 +0300 too
+// Last Modified: Sun 26 Oct 2025 16:20:09 +0200 too
 
 #define _POSIX_C_SOURCE 200112L
 #include "more-warnings.h"
@@ -139,6 +139,9 @@ static struct {
     int r;
 } B = { NULL, NULL, 256, 127 };
 
+
+// some "maeby once in a lifetime" pixel-exact work just for /fun/
+// - these circle and ¡¡ "lit"s
 static void draw_circle(uint32_t color) // Jesko's method to do circle
 {
     const int width = B.diam;
@@ -189,6 +192,7 @@ static void draw_ii(uint32_t color)
     const int n = iw + m;
     int ih = B.diam / 4;
     int sw = iw / 2;
+    if (iw == 6) sw = 4; // spezial case, instead of 2 4 66[6] 4 2 for iw 6
     const int csw = sw = (iw & 1) ? (sw | 1) : (sw & 0xfffe);
     uint32_t * cl = B.cntr - B.diam * ih - (m / 2) - iw + (iw - sw) / 2;
 
@@ -213,7 +217,7 @@ static void draw_ii(uint32_t color)
 	cl += B.diam;
     }
     sw = iw;
-    do {
+    do { // one extra pixel line - which is ok
 	for (int x = sw; x > 0; x--) {
 	    cl[x] = color;
 	    cl[x + n] = color;
@@ -319,7 +323,11 @@ static void xdg_surface_configure(void * data,
 	wl_buffer = create_buffer();
 	wl_surface_attach(wl_surface, wl_buffer, 0, 0);
 	__auto_type wl_region = wl_compositor_create_region(wl_compositor);
-	wl_region_add(wl_region, 0, 0, B.diam, B.diam);
+	int s = (B.diam * 10 / 32) * 2;
+	int p = (B.diam - s) / 2;
+	int i = B.diam / 64 + 1;
+	wl_region_add(wl_region, p, i, s, B.diam - i * 2);
+	wl_region_add(wl_region, i, p, B.diam - i * 2, s);
 	wl_surface_set_input_region(wl_surface, wl_region);
 	wl_surface_commit(wl_surface);
 	wl_region_destroy(wl_region);
@@ -494,7 +502,7 @@ int main(int argc, char ** argv)
     BB;
     time_t t = time(NULL);
     struct tm * tm = localtime(&t);
-    printf("\nlorvi - versio 0.9-mvp - %02d:%02d:%02d: alarm (exit in) 3h\n",
+    printf("\nlorvi - versio 0.91-mvp - %02d:%02d:%02d: alarm (exit in) 3h\n",
 	   tm->tm_hour,tm->tm_min, tm->tm_sec);
     BE;
     while (wl_display_dispatch(wl_display) > 0) {
