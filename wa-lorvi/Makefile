@@ -32,6 +32,9 @@ CFLAGS = -std=c11 -O2 -I$(BD)
 wl-protocols.h = $(BD)/xdg-shell-client-protocol.h
 wl-protocols.c = $(BD)/xdg-shell-protocol.c
 
+wl-protocols.h += $(BD)/wlr-layer-shell-unstable-v1-client-protocol.h
+wl-protocols.c += $(BD)/wlr-layer-shell-unstable-v1-protocol.c
+
 wl-protocols.h += $(BD)/idle-inhibit-unstable-v1-client-protocol.h
 wl-protocols.c += $(BD)/idle-inhibit-unstable-v1-protocol.c
 

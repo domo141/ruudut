@@ -1,7 +1,7 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
 // Created: Mon 03 Mar 22:00:58 EET 2025 too
-// Last Modified: Sun 26 Oct 2025 16:20:09 +0200 too
+// Last Modified: Tue 28 Oct 2025 23:09:20 +0200 too
 
 #define _POSIX_C_SOURCE 200112L
 #include "more-warnings.h"
@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <time.h>
@@ -22,6 +23,7 @@
 #pragma GCC diagnostic ignored "-Wcast-qual"
 
 #include "xdg-shell-client-protocol.h"
+#include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "idle-inhibit-unstable-v1-client-protocol.h"
 
 #pragma GCC diagnostic pop
@@ -119,6 +121,8 @@ static struct xdg_wm_base * xdg_wm_base;
 static struct wl_shm * wl_shm;
 static struct wl_compositor * wl_compositor;
 
+static struct zwlr_layer_shell_v1 * layer_shell;
+
 static struct zwp_idle_inhibit_manager_v1 * zwp_idle_inhibit_manager;
 
 static bool wl_buffer_released;
@@ -135,9 +139,9 @@ static const struct wl_buffer_listener wl_buffer_listener = {
 static struct {
     uint32_t * data;
     uint32_t * cntr;
-    int diam;
-    int r;
-} B = { NULL, NULL, 256, 127 };
+    uint16_t diam;
+    uint16_t r;
+} B;
 
 
 // some "maeby once in a lifetime" pixel-exact work just for /fun/
@@ -309,6 +313,26 @@ static struct wl_buffer * create_buffer(void)
     return wl_buffer;
 }
 
+// common to xdg and layer surfaces //
+
+static void surface_configure(void * data)
+{
+    // xxx temp __auto_type test...
+    __auto_type wl_surface = (struct wl_surface *)data;
+    wl_buffer = create_buffer();
+    wl_surface_attach(wl_surface, wl_buffer, 0, 0);
+    __auto_type wl_region = wl_compositor_create_region(wl_compositor);
+    int s = (B.diam * 10 / 32) * 2;
+    int p = (B.diam - s) / 2;
+    int i = B.diam / 64 + 1;
+    wl_region_add(wl_region, p, i, s, B.diam - i * 2);
+    wl_region_add(wl_region, i, p, B.diam - i * 2, s);
+    wl_surface_set_input_region(wl_surface, wl_region);
+    wl_surface_commit(wl_surface);
+    wl_region_destroy(wl_region);
+}
+
+
 // xdg_surface //
 
 static void xdg_surface_configure(void * data,
@@ -317,26 +341,39 @@ static void xdg_surface_configure(void * data,
 {
     //DF("%s(): %d\n", __func__, serial);
     xdg_surface_ack_configure(xdg_surface, serial);
-    if (wl_buffer == NULL) {
-	// xxx temp __auto_type test...
-	__auto_type wl_surface = (struct wl_surface *)data;
-	wl_buffer = create_buffer();
-	wl_surface_attach(wl_surface, wl_buffer, 0, 0);
-	__auto_type wl_region = wl_compositor_create_region(wl_compositor);
-	int s = (B.diam * 10 / 32) * 2;
-	int p = (B.diam - s) / 2;
-	int i = B.diam / 64 + 1;
-	wl_region_add(wl_region, p, i, s, B.diam - i * 2);
-	wl_region_add(wl_region, i, p, B.diam - i * 2, s);
-	wl_surface_set_input_region(wl_surface, wl_region);
-	wl_surface_commit(wl_surface);
-	wl_region_destroy(wl_region);
-    }
+    if (wl_buffer == NULL)
+	surface_configure(data);
 }
 
 static const struct xdg_surface_listener xdg_surface_listener = {
     .configure = xdg_surface_configure,
 };
+
+// layer_surface //
+
+static void layer_surface_configure(void * data,
+				    struct zwlr_layer_surface_v1 * surface,
+				    uint32_t serial,
+				    uint32_t UU(w), uint32_t UU(h))
+{
+    //DP("%s: %d\n", __func__, serial);
+    zwlr_layer_surface_v1_ack_configure(surface, serial);
+    if (wl_buffer == NULL)
+	surface_configure(data);
+}
+
+static void layer_surface_closed(void * UU(data),
+				 struct zwlr_layer_surface_v1 * UU(surface)) {
+
+    // maeby needs other destructions first //
+    //zwlr_layer_surface_v1_destroy(surface);
+    exit(111);
+}
+struct zwlr_layer_surface_v1_listener layer_surface_listener = {
+	.configure = layer_surface_configure,
+	.closed = layer_surface_closed,
+};
+
 
 // pointer //
 
@@ -400,6 +437,13 @@ const struct wl_seat_listener wl_seat_listener = {
     .name = noop
 };
 
+struct {
+    int16_t lleft;
+    int16_t ltop;
+    bool use_layer_shell;
+} L;
+
+
 static void wl_registry_global(void * UU(data),
 			       struct wl_registry * wl_registry,
 			       uint32_t name, const char * interface,
@@ -416,11 +460,20 @@ static void wl_registry_global(void * UU(data),
 					 &wl_compositor_interface, 4);
 	return;
     }
-    if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
-	xdg_wm_base = wl_registry_bind(wl_registry, name,
-				       &xdg_wm_base_interface, 1);
-	xdg_wm_base_add_listener(xdg_wm_base, &xdg_wm_base_listener, NULL);
-	return;
+    if (L.use_layer_shell) {
+	if (strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0) {
+	    layer_shell = wl_registry_bind(wl_registry, name,
+					   &zwlr_layer_shell_v1_interface, 4);
+	    return;
+	}
+    }
+    else {
+	if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
+	    xdg_wm_base = wl_registry_bind(wl_registry, name,
+					   &xdg_wm_base_interface, 1);
+	    xdg_wm_base_add_listener(xdg_wm_base, &xdg_wm_base_listener, NULL);
+	    return;
+	}
     }
     if (strcmp(interface, wl_seat_interface.name) == 0) {
 	struct wl_seat *
@@ -452,18 +505,116 @@ static int xwl_display_dispatch(struct wl_display *display)
 #define wl_display_dispatch xwl_display_dispatch
 #endif
 
+#define die(...) errx(1, __VA_ARGS__)
+
+static int secs_from_hm(const char * hm)
+{
+    char * ep;
+    int h = strtol(hm, &ep, 10);
+    if (h > 23) return 24 * 3600;
+    int m;
+    if (*ep == ':' || *ep == '.') {
+	m = atoi(ep + 1);
+	if (m > 59) m = 59;
+    }
+    else m = 0;
+    return h * 3600 + m * 60;
+}
+
+static inline
+int until_time(const char * s)
+{
+    tzset();
+    int csecs = (int)((time(NULL) - timezone) % 86400);
+    int osecs = secs_from_hm(s);
+    int dsecs = osecs - csecs;
+    if (dsecs < 0) dsecs += 86400;
+    return dsecs > 75600? 75600: dsecs; // max 21h
+}
+
+static inline
+int secs_from_hours(const char * s)
+{
+    int secs = secs_from_hm(s);
+    return secs > 75600? 75600: secs; // max 21h
+}
+
+// from opts--long.c, somewhat different here...
+// the trick to do arg parsers in c is to use char *** argvp...
+static const char * optarg_(const char * optp, /*const*/ char *** argvp)
+{
+    if ((++optp)[0] != 0) {
+	return (optp[0] == '=')? optp + 1: optp;
+    }
+    const char * ov = (++(*argvp))[0];
+    if (ov == NULL) die("option requires an argument -- '%c'", optp[-1]);
+    return ov;
+}
+
 int main(int argc, char ** argv)
 {
-    if (argc > 1) {
-	int s = atoi(argv[1]);
-	if (s > 0) {
-	    /**/ if (s < 32) s = 32;
-	    else if (s > 1024) s = 1024;
-	    else s = (s + 1) & ~1;
-	    B.diam = s;
-	    B.r = s / 2 - 1;
-	}
+    if (argc < 2) {
+	const char * progname = strrchr(argv[0], '/');
+	progname = progname? progname + 1: argv[0];
+	// U+2300 ⌀ DIAMETER SIGN (but used U+00D8 Ø LATIN CAPITAL LETTER O WITH STROKE)
+	fprintf(stderr, "\n"
+		"Usage: %s [-g [ø][±xoff±yoff]] [-]time\n\n", progname);
+	exit(1);
     }
+    int secs = 0;
+#define isdigit(c) ((c) >= '0' && (c) <= '9')
+    for (const char * arg = (++argv)[0]; arg; arg = (++argv)[0]) {
+	while (arg[0] == '-' && ! isdigit(arg[1]))
+	    arg++;
+	switch (arg[0]) {
+	case 'g':
+	    const char * geom = optarg_(arg, &argv);
+	    /*const*/ char * ep;
+	    long l = 0;
+	    if (isdigit(*geom)) {
+		l = strtol(geom, &ep, 10);
+		/**/ if (l <= 32) l = 32;
+		else if (l > 1024) l = 1024;
+		B.diam = l;
+		B.r = l / 2 - 1;
+	    }
+	    else ep = discard_const_p(char, geom); // pöh...
+	    if (*ep != '+' && *ep != '-') {
+		if (l > 0 && *ep == '\0') continue;
+		die("'-g %s' '%s' does not start with '+' nor '-'", geom, ep);
+	    }
+	    bool m = (*ep == '-');
+	    l = strtol(ep, &ep, 10);
+	    if (*ep != '+' && *ep != '-')
+		die("'-g %s' '%s', at pos %ld not '+' nor '-'", geom, ep, ep - geom);
+
+	    // check so can be written to L... but too lazy to check output dims so...
+	    /**/ if (l < -1000) l = -1000;
+	    else if (l > 1000) l = 1000;
+	    L.lleft = m? l - 1: l;
+
+	    m = (*ep == '-');
+	    l = strtol(ep, &ep, 10);
+	    if (*ep != '\0')
+		die("'-g %s' '%s', at pos %ld unexpected", geom, ep, ep - geom);
+
+	    /**/ if (l < -1000) l = -1000;
+	    else if (l > 1000) l = 1000;
+	    L.ltop = m? l - 1: l;
+
+	    L.use_layer_shell = true;
+	    continue;
+
+	case '-':
+	    secs = until_time(arg + 1);
+	    continue;
+	}
+	if (! isdigit(arg[0])) die("unrecognized option -- '%s'", arg);
+	secs = secs_from_hours(arg);
+    }
+    if (secs <= 0) die("[-]time not given");
+    if (secs < 60) secs = 60; // still silly small but...
+
     struct wl_display * wl_display = wl_display_connect(NULL);
     BB;
     struct wl_registry * wl_registry = wl_display_get_registry(wl_display);
@@ -474,14 +625,52 @@ int main(int argc, char ** argv)
     struct wl_surface *
 	wl_surface = wl_compositor_create_surface(wl_compositor);
     BB;
-    struct xdg_surface *
-	xdg_surface = xdg_wm_base_get_xdg_surface(xdg_wm_base, wl_surface);
-    xdg_surface_add_listener(xdg_surface, &xdg_surface_listener, wl_surface);
+    if (L.use_layer_shell) {
+	if (layer_shell == NULL) exit(123);
+	if (B.diam == 0) { B.diam = 64; B.r = 31; }
+	// wat was the type again ?
+	__auto_type layer_surface = zwlr_layer_shell_v1_get_layer_surface(
+#if 0
+	    layer_shell, wl_surface, NULL, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
+#else
+	    layer_shell, wl_surface, NULL, ZWLR_LAYER_SHELL_V1_LAYER_TOP,
+#endif
+	    "layer-lorvii");
+	zwlr_layer_surface_v1_set_size(layer_surface, B.diam, B.diam);
+	BB;
+	int anchor, lm, rm, tm, bm;
+	if (L.lleft < 0) {
+	    anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+	    lm = 0; rm = -1 - L.lleft;
+	} else {
+	    anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
+	    lm = L.lleft; rm = 0;
+	}
+	if (L.ltop < 0) {
+	    anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+	    tm = 0; bm = -1 - L.ltop;
+	} else {
+	    anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+	    tm = L.ltop; bm = 0;
+	}
+	zwlr_layer_surface_v1_set_anchor(layer_surface, anchor);
+	zwlr_layer_surface_v1_set_margin(layer_surface, tm, rm, bm, lm);
+	BE;
+	//zwlr_layer_surface_v1_set_keyboard_interactivity(layer_surface, ?);
+	zwlr_layer_surface_v1_add_listener(layer_surface,
+					   &layer_surface_listener, wl_surface);
+    }
+    else {
+	if (B.diam == 0) { B.diam = 128; B.r = 63; }
+	struct xdg_surface *
+	    xdg_surface = xdg_wm_base_get_xdg_surface(xdg_wm_base, wl_surface);
+	xdg_surface_add_listener(xdg_surface, &xdg_surface_listener, wl_surface);
 
-    struct xdg_toplevel * xdg_toplevel = xdg_surface_get_toplevel(xdg_surface);
+	struct xdg_toplevel * xdg_toplevel = xdg_surface_get_toplevel(xdg_surface);
 
-    xdg_toplevel_set_title(xdg_toplevel, "(ii)");
-    xdg_toplevel_set_app_id(xdg_toplevel, "lorvi");
+	xdg_toplevel_set_title(xdg_toplevel, "(ii)");
+	xdg_toplevel_set_app_id(xdg_toplevel, "lorvi");
+    }
     wl_surface_commit(wl_surface);
     BE;
     /* now is good moment to create the idle inhibitor object on surface */
@@ -498,12 +687,15 @@ int main(int argc, char ** argv)
     }
 
     // three hours for now -- to be configured later...
-    alarm(10800);
+    alarm(secs);
     BB;
     time_t t = time(NULL);
     struct tm * tm = localtime(&t);
-    printf("\nlorvi - versio 0.91-mvp - %02d:%02d:%02d: alarm (exit in) 3h\n",
-	   tm->tm_hour,tm->tm_min, tm->tm_sec);
+    int h = tm->tm_hour, m = tm->tm_min, s = tm->tm_sec;
+    t += secs; tm = localtime(&t);
+    printf("\nlorvi - versio 0.95 - "
+	   "%02d:%02d:%02d: alarm (exit) in %ds (%02d:%02d:%02d)\n",
+	   h, m, s, secs, tm->tm_hour, tm->tm_min, tm->tm_sec);
     BE;
     while (wl_display_dispatch(wl_display) > 0) {
 	if (wl_buffer_released == 0)
