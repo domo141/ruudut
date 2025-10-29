@@ -1,7 +1,7 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
 // Created: Mon 03 Mar 22:00:58 EET 2025 too
-// Last Modified: Tue 28 Oct 2025 23:09:20 +0200 too
+// Last Modified: Wed 29 Oct 2025 22:02:03 +0200 too
 
 #define _POSIX_C_SOURCE 200112L
 #include "more-warnings.h"
@@ -556,17 +556,26 @@ int main(int argc, char ** argv)
     if (argc < 2) {
 	const char * progname = strrchr(argv[0], '/');
 	progname = progname? progname + 1: argv[0];
-	// U+2300 ⌀ DIAMETER SIGN (but used U+00D8 Ø LATIN CAPITAL LETTER O WITH STROKE)
+	// U+2300 ⌀ DIAMETER SIGN (but used U+00D8 Ø LATIN CAPITAL LETTER O
+	// WITH STROKE) (more likely to "work" and Hack font has better glyph)
 	fprintf(stderr, "\n"
 		"Usage: %s [-g [ø][±xoff±yoff]] [-]time\n\n", progname);
 	exit(1);
     }
     int secs = 0;
+    bool quiet = false;
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
     for (const char * arg = (++argv)[0]; arg; arg = (++argv)[0]) {
 	while (arg[0] == '-' && ! isdigit(arg[1]))
 	    arg++;
-	switch (arg[0]) {
+	if (arg[0] == '\0') die("empty option -- '%s'", argv[0]);
+	// note to self: could have one extra loop, w/ or w/o separate switch
+	// instead of goto (goto is ok though). multi-char opts forces changes
+    S:  switch (arg[0]) {
+	case 'q':
+	    quiet = true;
+	    arg++;
+	    goto S;
 	case 'g':
 	    const char * geom = optarg_(arg, &argv);
 	    /*const*/ char * ep;
@@ -575,6 +584,7 @@ int main(int argc, char ** argv)
 		l = strtol(geom, &ep, 10);
 		/**/ if (l <= 32) l = 32;
 		else if (l > 1024) l = 1024;
+		else if (l & 1) l += 1;
 		B.diam = l;
 		B.r = l / 2 - 1;
 	    }
@@ -586,30 +596,40 @@ int main(int argc, char ** argv)
 	    bool m = (*ep == '-');
 	    l = strtol(ep, &ep, 10);
 	    if (*ep != '+' && *ep != '-')
-		die("'-g %s' '%s', at pos %ld not '+' nor '-'", geom, ep, ep - geom);
+		die("'-g %s' '%s', at pos %ld not '+' nor '-'",
+		    geom, ep, ep - geom);
 
-	    // check so can be written to L... but too lazy to check output dims so...
-	    /**/ if (l < -1000) l = -1000;
-	    else if (l > 1000) l = 1000;
+	    // check so can be written to L.l(left|top)
+	    /**/ if (l < -32766) l = -32766;
+	    else if (l > 32766) l = 32766;
 	    L.lleft = m? l - 1: l;
 
 	    m = (*ep == '-');
 	    l = strtol(ep, &ep, 10);
 	    if (*ep != '\0')
-		die("'-g %s' '%s', at pos %ld unexpected", geom, ep, ep - geom);
+		die("'-g %s' '%s', at pos %ld unexpected",
+		    geom, ep, ep - geom);
 
-	    /**/ if (l < -1000) l = -1000;
-	    else if (l > 1000) l = 1000;
+	    /**/ if (l < -32766) l = -32766;
+	    else if (l > 32766) l = 32766;
 	    L.ltop = m? l - 1: l;
 
 	    L.use_layer_shell = true;
 	    continue;
 
 	case '-':
+	    if (arg != argv[0]) die("Time '%s' to be in separate option", arg);
 	    secs = until_time(arg + 1);
 	    continue;
+	case '\0':
+	    continue;
 	}
-	if (! isdigit(arg[0])) die("unrecognized option -- '%s'", arg);
+	if (isdigit(arg[0])) {
+	    if (arg != argv[0]) die("Time '%s' to be in separate option", arg);
+	}
+	else
+	    die("unrecognized option -- '%s'", arg);
+
 	secs = secs_from_hours(arg);
     }
     if (secs <= 0) die("[-]time not given");
@@ -686,17 +706,16 @@ int main(int argc, char ** argv)
 	/* ^ wait for xdg_surface_configure() to create wl_buffer...^ */
     }
 
-    // three hours for now -- to be configured later...
     alarm(secs);
-    BB;
-    time_t t = time(NULL);
-    struct tm * tm = localtime(&t);
-    int h = tm->tm_hour, m = tm->tm_min, s = tm->tm_sec;
-    t += secs; tm = localtime(&t);
-    printf("\nlorvi - versio 0.95 - "
-	   "%02d:%02d:%02d: alarm (exit) in %ds (%02d:%02d:%02d)\n",
-	   h, m, s, secs, tm->tm_hour, tm->tm_min, tm->tm_sec);
-    BE;
+    if (! quiet) {
+	time_t t = time(NULL);
+	struct tm * tm = localtime(&t);
+	int h = tm->tm_hour, m = tm->tm_min, s = tm->tm_sec;
+	t += secs; tm = localtime(&t);
+	printf("\nlorvi - versio 0.96 - "
+	       "%02d:%02d:%02d: alarm (exit) in %ds (%02d:%02d)\n",
+	       h, m, s, secs, tm->tm_hour, tm->tm_min);
+    }
     while (wl_display_dispatch(wl_display) > 0) {
 	if (wl_buffer_released == 0)
 	    continue;
