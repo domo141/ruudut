@@ -25,6 +25,8 @@ Wa -etuliitteellä Wayland-sovellukset omaksi listakseen:
 
 + [[wa-ootappa]] :: punainen ajastin näytön keskellä
 
++ [[wa-lorvi]] :: näytönlukituksen estäjä
+
 + [[wa-tiili]] :: palikka ruudun reunassa näyttäen työpöydän, ajan ja akun tason
 
 With -etuliitteellä hakemistot joissa säätöjä muihin sovelluksiin:

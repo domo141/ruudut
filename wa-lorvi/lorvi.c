@@ -1,7 +1,7 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
-// Created: Mon 03 Mar 22:00:58 EET 2025 too
-// Last Modified: Wed 29 Oct 2025 22:02:03 +0200 too
+// Created: Wed 15 Oct 19:00:58 EET 2025 too
+// Last Modified: Sun 02 Nov 2025 00:00:34 +0200 too
 
 #define _POSIX_C_SOURCE 200112L
 #include "more-warnings.h"
@@ -551,15 +551,27 @@ static const char * optarg_(const char * optp, /*const*/ char *** argvp)
     return ov;
 }
 
+#define NAME "lorvi"
+#define VER "1.0"
+
 int main(int argc, char ** argv)
 {
     if (argc < 2) {
 	const char * progname = strrchr(argv[0], '/');
 	progname = progname? progname + 1: argv[0];
 	// U+2300 ⌀ DIAMETER SIGN (but used U+00D8 Ø LATIN CAPITAL LETTER O
-	// WITH STROKE) (more likely to "work" and Hack font has better glyph)
+	// WITH STROKE) (more likely to "work" and looks OK (if not better))
 	fprintf(stderr, "\n"
-		"Usage: %s [-g [ø][±xoff±yoff]] [-]time\n\n", progname);
+	 "Usage: %s [-Vq] [-g [Ø][±xoff±yoff]] [-]time\n\n"
+	 "   time (h or h:m): exit after h hours (+ m minutes)\n"
+	 "  -time (h or h:m): exit at that time\n"
+	 "\nOptionally:\n"
+	 "  -g diameter and/or ±xoff±yoff: size and location of the (¡¡)\n"
+	 "  -q: quiet - don't print the exit time message to stdout\n"
+	 "  -V: print version and exit\n\n"
+	 "When ±xoff±yoff is given, layer-shell is used to position the (¡¡)\n"
+	 "Double-click on (¡¡) exits this idle-inhibitor client as well\n\n"
+	 , progname);
 	exit(1);
     }
     int secs = 0;
@@ -572,6 +584,9 @@ int main(int argc, char ** argv)
 	// note to self: could have one extra loop, w/ or w/o separate switch
 	// instead of goto (goto is ok though). multi-char opts forces changes
     S:  switch (arg[0]) {
+	case 'V':
+	    printf(NAME " " VER "\n");
+	    exit(0);
 	case 'q':
 	    quiet = true;
 	    arg++;
@@ -628,7 +643,7 @@ int main(int argc, char ** argv)
 	    if (arg != argv[0]) die("Time '%s' to be in separate option", arg);
 	}
 	else
-	    die("unrecognized option -- '%s'", arg);
+	    die("unrecognized option -- '%c'", arg[0]);
 
 	secs = secs_from_hours(arg);
     }
@@ -646,7 +661,8 @@ int main(int argc, char ** argv)
 	wl_surface = wl_compositor_create_surface(wl_compositor);
     BB;
     if (L.use_layer_shell) {
-	if (layer_shell == NULL) exit(123);
+	if (layer_shell == NULL)
+	    die("wlr-layer-shell-v1 not supported by compositor!");
 	if (B.diam == 0) { B.diam = 64; B.r = 31; }
 	// wat was the type again ?
 	__auto_type layer_surface = zwlr_layer_shell_v1_get_layer_surface(
@@ -712,9 +728,10 @@ int main(int argc, char ** argv)
 	struct tm * tm = localtime(&t);
 	int h = tm->tm_hour, m = tm->tm_min, s = tm->tm_sec;
 	t += secs; tm = localtime(&t);
-	printf("\nlorvi - versio 0.96 - "
-	       "%02d:%02d:%02d: alarm (exit) in %ds (%02d:%02d)\n",
-	       h, m, s, secs, tm->tm_hour, tm->tm_min);
+	printf("\n%02d:%02d:%02d: "NAME" alarm (exit) in %ds ",
+	       h, m, s, secs);
+	if (tm->tm_sec == 0) printf("(%02d:%02d)\n", tm->tm_hour, tm->tm_min);
+	else printf("(%02d:%02d:%02d)\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
     }
     while (wl_display_dispatch(wl_display) > 0) {
 	if (wl_buffer_released == 0)

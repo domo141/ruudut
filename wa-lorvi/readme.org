@@ -1,0 +1,34 @@
+#+STARTUP: showall
+
+* lorvi
+
+
+#+BEGIN_HTML
+<div align="center"><img src="lorvi.png" height="128" width="128"/></div>
+<br/>
+<table><tr><td valign="top" width="50%">
+
+<b>An idle inhibitor client</b>
+<br/>
+Keeps display unlocked (and powered on) while process
+exists.
+Exits after timeout, double-click or signal.
+<br/>
+When run without options this program prints Usage.
+
+</td><td valign="top" width="50%">
+
+<b>Näytönlukituksen estäjä</b>
+<br/>
+Näyttö pysyy lukitsemattomana (ja pimenemättömänä)
+silloin kuin tämä tietokoneohjelma on ajossa.
+Ajo loppuu annetun ajan, kaksoiskosketuksen tai
+signaalin saapumisen jälkeen.
+<br/>
+Ilman optioita ajettuna tämä ohjelma tulostaa Usagen.
+
+</td></tr></table>
+#+END_HTML
+
+# (fundamental-mode)
+# (org-mode)

@@ -25,6 +25,8 @@ Wa- prefix is to separate Wayland Applications in their own listing block:
 
 + [[wa-ootappa]] :: red countdown timer in the middle of the screen
 
++ [[wa-lorvi]] :: an idle inhibitor client
+
 + [[wa-tiili]] :: workspace, day and time, battery status - in an overlay block
   on desktop which consumes "zero" space
 

@@ -17,6 +17,7 @@ help:
 	$(info )
 	$(info Enter)
 	$(info : make all ;: to compile $(BD)/lorvi)
+	$(info : make cp D=dir ;: to strip, then copy $(BD)/lorvi to $$D/)
 	$(info : make distclean ;: to remove $(BD)/)
 	$(info : other, look inside $(MAKEFILE_LIST))
 	$(info )
@@ -61,8 +62,28 @@ endif
 DM = 128
 
 .PHONY: run
-run:	$(BD)/lorvi
+run:	$(BD)/lorvi all
 	$< $(DM)
+
+D =
+.PHONY: D
+D:
+ifndef D
+	$(error Usage: $(MAKE) $(MAKECMDGOALS) D=dir)
+endif
+ifneq ($(words $D), 1)
+	$(error Whitespace in "'$D'")
+endif
+ifeq ($(wildcard $D/.),)
+	$(error "'$D'": no such directory)
+endif
+
+.PHONY: cp
+cp:	$(BD)/lorvi D all
+	@test ! $< -ef $D/$(<F) || { echo source and dest same;exit 1; }
+	strip -o $D/$(<F) $<
+	ls -l $D/$(<F)
+
 
 .PHONY: vwoc	# view without comments (hacky imprecise approach but useful)
 vwoc:		# useful to view wayland protocol header files
