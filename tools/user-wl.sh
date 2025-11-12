@@ -146,6 +146,8 @@ cmd_pngshrink ()
 	test $# -le 2 || command -v pngquant >/dev/null ||
 		die "'pngquant': no such command"
 
+	case $2 in *.png) ;; *) die "Output file '$2' does not end with '.png'"
+	esac
 	test -f "$1" || die "'$1' input file missing"
 	test -e "$2" && die "'$2' output file exists"
 	ifile=$1 ofile=$2; shift 2
