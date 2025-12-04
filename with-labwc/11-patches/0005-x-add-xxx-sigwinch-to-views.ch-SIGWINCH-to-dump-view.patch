@@ -1,4 +1,4 @@
-From 2a4957f74b51dca81baa9a3363d9b28dbc960647 Mon Sep 17 00:00:00 2001
+From f5243b4f531826b209914448db76e0d86f9aefd9 Mon Sep 17 00:00:00 2001
 From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Mon, 25 Mar 2024 16:38:25 +0200
 Subject: [PATCH] x add xxx-sigwinch-to-views.ch - SIGWINCH to dump views to a
@@ -6,14 +6,14 @@ Subject: [PATCH] x add xxx-sigwinch-to-views.ch - SIGWINCH to dump views to a
 
 ---
  include/xxx/xxx-sigwinch-to-views.ch | 111 +++++++++++++++++++++++++++
- src/osd/osd-field.c                  |   4 +
+ src/cycle/osd-field.c                |   4 +
  src/server.c                         |   5 ++
  3 files changed, 120 insertions(+)
  create mode 100644 include/xxx/xxx-sigwinch-to-views.ch
 
 diff --git a/include/xxx/xxx-sigwinch-to-views.ch b/include/xxx/xxx-sigwinch-to-views.ch
 new file mode 100644
-index 00000000..8ba53f37
+index 00000000..079bc0cb
 --- /dev/null
 +++ b/include/xxx/xxx-sigwinch-to-views.ch
 @@ -0,0 +1,111 @@
@@ -128,11 +128,11 @@ index 00000000..8ba53f37
 +	close(fd);
 +}
 +#endif // XXX_CODE_FOR_OSD_FIELD_C
-diff --git a/src/osd/osd-field.c b/src/osd/osd-field.c
-index c27b9379..db02238c 100644
---- a/src/osd/osd-field.c
-+++ b/src/osd/osd-field.c
-@@ -381,3 +381,7 @@ osd_field_free(struct window_switcher_field *field)
+diff --git a/src/cycle/osd-field.c b/src/cycle/osd-field.c
+index cfc32811..cd424ed0 100644
+--- a/src/cycle/osd-field.c
++++ b/src/cycle/osd-field.c
+@@ -368,3 +368,7 @@ cycle_osd_field_free(struct cycle_osd_field *field)
  	zfree(field->format);
  	zfree(field);
  }
@@ -141,10 +141,10 @@ index c27b9379..db02238c 100644
 +#include "xxx/xxx-sigwinch-to-views.ch"
 +#undef XXX_CODE_FOR_OSD_FIELD_C
 diff --git a/src/server.c b/src/server.c
-index a9e021dc..874b1776 100644
+index 9f271b10..fe31d790 100644
 --- a/src/server.c
 +++ b/src/server.c
-@@ -69,6 +69,10 @@
+@@ -68,6 +68,10 @@
  #include "workspaces.h"
  #include "xwayland.h"
  
@@ -155,7 +155,7 @@ index a9e021dc..874b1776 100644
  #define LAB_EXT_DATA_CONTROL_VERSION 1
  #define LAB_EXT_FOREIGN_TOPLEVEL_LIST_VERSION 1
  #define LAB_WLR_COMPOSITOR_VERSION 6
-@@ -747,6 +751,7 @@ server_start(struct server *server)
+@@ -753,6 +757,7 @@ server_start(struct server *server)
  	} else {
  		wlr_log(WLR_DEBUG, "WAYLAND_DISPLAY=%s", socket);
  	}
@@ -164,5 +164,5 @@ index a9e021dc..874b1776 100644
  
  void
 -- 
-2.50.1
+2.52.0
 
