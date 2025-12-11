@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 27 Nov 2021 15:53:37 EET too
-# Last modified: Fri 13 Sep 2024 21:44:50 +0300 too
+# Last modified: Thu 11 Dec 2025 21:05:28 +0200 too
 
 use 5.8.1;
 use strict;
@@ -55,9 +55,10 @@ sub setcolor($$$)
 {
     # somewhat heuristic checks -- catches worst typos...
     #die "'$_[1]': less than 3 chars in '$_[2]' (hint: trailing '.'?)\n"
-    die "'$_[1]': less than 3 chars in '$_[2]'\n"
+    die "less than 3 chars in arg '$_[1]', for '$_[2]'\n"
       unless length $_[1] >= 3;
-    die "'$_[1]': suspicious chars in $_[2]\n" unless $_[1] =~ /^#?[\w ]+$/;
+    die "suspicious chars in arg '$_[1]', for $_[2]\n"
+      unless $_[1] =~ /^#?[\w ]+$/;
     $_[0] = ($_[1] =~ /^[\da-f]+$/)? "#$_[1]": $_[1];
 }
 setcolor my $fgcolor, shift, 'fgcolor' if @ARGV & 1;
