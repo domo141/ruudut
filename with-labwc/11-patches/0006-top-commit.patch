@@ -1,21 +1,21 @@
-From e76b7e738f8e5f899910025b88a35b12755b6f4b Mon Sep 17 00:00:00 2001
+From 0c5e798ae561e922dd54171e9d47b73c3fa7dbd6 Mon Sep 17 00:00:00 2001
 From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Tue, 14 Jan 2025 06:45:06 +0200
 Subject: [PATCH] + top commit +
 
 ---
- GNUmakefile         | 260 ++++++++++++++++++++++++++++++++++++++++++++
+ GNUmakefile         | 262 ++++++++++++++++++++++++++++++++++++++++++++
  binpatch-version.pl |  57 ++++++++++
- 2 files changed, 317 insertions(+)
+ 2 files changed, 319 insertions(+)
  create mode 100644 GNUmakefile
  create mode 100755 binpatch-version.pl
 
 diff --git a/GNUmakefile b/GNUmakefile
 new file mode 100644
-index 00000000..b2a91902
+index 00000000..b155afa6
 --- /dev/null
 +++ b/GNUmakefile
-@@ -0,0 +1,260 @@
+@@ -0,0 +1,262 @@
 +
 +# ln -sr pick-changes/GNUmakefile .
 +
@@ -78,6 +78,8 @@ index 00000000..b2a91902
 +$(rcp): # build
 +	$(sh)
 +	test -f data/labwc.desktop || die "Not in labwc git toplevel dir (?)"
++	PATH=$${PWD%/*}/11-patches:$$PATH
++	export PATH
 +	if test -d build
 +	then	it=
 +	else
@@ -340,5 +342,5 @@ index 00000000..c1811fce
 +    #substr $_, $pos $gverlen, $gver; # did not wrok :/
 +}
 -- 
-2.49.0
+2.52.0
 
