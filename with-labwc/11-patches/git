@@ -20,9 +20,9 @@ test "$1" = describe || exec_git "$@"
 
 set -euf
 
-case $PWD in */with-labwc/wt-20??-??-??-*) ;; *) exec_git "$@" ;; esac
+case $PWD in */with-labwc/wt-20??-??-??-u*) ;; *) exec_git "$@" ;; esac
 
-u=${PWD##*/with-labwc/wt-20??-??-??-}
+u=${PWD##*/with-labwc/wt-20??-??-??-u}
 u=${u%%/*}
 test ${#u} = 7 || exec_git "$@"
 

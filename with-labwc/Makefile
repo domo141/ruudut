@@ -51,7 +51,7 @@ x_exec () { printf '+ %s\n' "$$*" >&2; exec "$$@"; }
 set_dwt () {
 	set -- `git -C $(XR_LUD) log -1 --abbrev=7 --format='%ci %h' $C`
 	test $$# -ge 4 || exit 15
-	wt=wt-$$1-$$4
+	wt=wt-$$1-u$$4
 }
 endef
 
