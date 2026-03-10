@@ -106,7 +106,7 @@ index 00000000..079bc0cb
 +		int l = snprintf(buf + bp, sizeof buf - bp,
 +				 "%u %s %s\n", c,
 +				 get_identifier(view, /*trim*/ true),
-+				 get_title_if_different(view));
++				 view->title);
 +		bp += l;
 +		if (bp > sizeof buf - 512) {
 +			if (bp >= sizeof buf) { //unlikely//
