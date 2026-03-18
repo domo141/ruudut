@@ -78,7 +78,7 @@ $(GD)/%-server-protocol.h: %.xml | $(GD)
 M =
 .PHONY: run
 run: $(BD)/tiili
-	setsid -f $< $M
+	$< $M
 
 WC = echo give WC=... on command line
 
