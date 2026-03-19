@@ -39,6 +39,7 @@
 #include "locall.h"
 
 #if 1
+//#define DP printf("%d: ", __LINE__); printf
 #define DP printf
 #define VP (void*)
 #else
@@ -51,6 +52,7 @@
 #else
 #define UU(x) x ## _unused
 #endif
+#define NUU(x) x // (UU -> NUU in code temporarily...)
 
 // gcc -std=c2x -dM -xc -E /dev/null | grep STDC_V ;: was used to get 202000L
 #if !defined (__STDC_VERSION__) || __STDC_VERSION__ < 202000L
@@ -154,6 +156,7 @@ static struct wl_compositor * wl_compositor;
 #if USE_WLR_LAYER_SHELL
 static struct zwlr_layer_shell_v1 * layer_shell;
 #endif
+struct ext_workspace_manager_v1 * workspace_manager;
 
 static bool wl_buffer_released;
 static void wl_buffer_release(void * UU(data),
@@ -299,9 +302,11 @@ static_assert (sizeof(long) >= 8);
 }
 
 /* workspace */
-static volatile char wsn = -1;
+static volatile int8_t wsn = -1;
 /* enter/leave */
-static volatile char eln = -1;
+static volatile int8_t eln = -1;
+
+static_assert((int8_t)0x80 < 0);
 
 static inline void draw_border(char f)
 {
@@ -326,13 +331,14 @@ static bool draw_buffer(void)
 	eln = -1;
     }
 
+    //DP("wsn = %x\n", (uint8_t)wsn);
     if (wsn >= 0) {
 	//unsigned int ws = wsn; if (ws > 9) ws = 0;
 //#pragma GCC diagnostic push
 //#pragma GCC diagnostic ignored "-Wall" // "-Wchar-subscripts"
 	draw_txti(V.off_nbrs[+wsn], V.glywn, B.loc_ws); // +wsn to silence warn
 //#pragma GCC diagnostic pop
-	wsn = -1;
+	wsn |= 0x80;
 	// note to self: damage-x -- damage-width to retval (or x1,x2)
 	if (ct == pt) return 1;
 	// lisää vihje wev(1):sta kun lisää sen pointer-jutukkeen...
@@ -572,12 +578,45 @@ static void wl_pointer_leave(void * UU(data),
     eln = 0; //DP("leave\n");
 }
 
+static struct ext_workspace_handle_v1 * workspazes[9];
+
+static void wl_pointer_axis(void * UU(data),
+			    struct wl_pointer * UU(wl_pointer),
+			    uint32_t time, uint32_t UU(axis),
+			    wl_fixed_t value)
+{
+    if (wsn & 0x40) return;
+    // could also sum up values but got this done and seems to work...
+    static uint32_t prevtime;
+    int s = ((int)value < 0) ? (-(int)value >> 3) : ((int)value >> 3);
+    s = (int)(time - prevtime) + s;
+    //DP("axis %d %x %d %u\n", value, (uint8_t)wsn, time, s);
+    if (s < 400) return; // value >> 3 and s < 400 based on trials...
+    prevtime = time;
+    int i = wsn & 0x7f;
+    if ((int)value < 0) {
+	if (i <= 1) return;
+	if (workspazes[i - 2] == NULL) return;
+	ext_workspace_handle_v1_activate(workspazes[i - 2]);
+	ext_workspace_manager_v1_commit(workspace_manager);
+	wsn |= 0x60;
+	return;
+    }
+    // else (could deduplicate but...) //
+    if (i >= 9) return;
+    if (workspazes[i] == NULL) return;
+    ext_workspace_handle_v1_activate(workspazes[i]);
+    ext_workspace_manager_v1_commit(workspace_manager);
+    wsn |= 0x60;
+}
+
+
 struct wl_pointer_listener wl_pointer_listener = {
     .enter = wl_pointer_enter,
     .leave = wl_pointer_leave,
     .motion = noop,
     .button = noop,
-    .axis = noop,
+    .axis = wl_pointer_axis,
     .frame = noop,
     .axis_source = noop,
     .axis_stop = noop,
@@ -622,8 +661,6 @@ static void ext_workspace_group(
 	workspace_group, &workspace_group_handle_listener, NULL);
 }
 #endif
-
-static struct ext_workspace_handle_v1 *workspazes[9];
 
 #if 0
 static void ext_workspace_id(
@@ -770,9 +807,8 @@ static void wl_registry_global(void * UU(data),
     }
 #endif
     else if (strcmp(interface, ext_workspace_manager_v1_interface.name) == 0) {
-	struct ext_workspace_manager_v1 * workspace_manager
-	    = wl_registry_bind(wl_registry, name,
-			       &ext_workspace_manager_v1_interface, 1);
+	workspace_manager = wl_registry_bind
+	    (wl_registry, name, &ext_workspace_manager_v1_interface, 1);
 
 	ext_workspace_manager_v1_add_listener(workspace_manager,
 					      &ext_workspace_listener, NULL);
@@ -999,6 +1035,12 @@ int main(int argc, char ** argv)
 	    wl_surface_commit(wl_surface);
 	    wl_display_flush(wl_display); // expect data fits to (100K+) soc...
 	}
+	else if (wsn & 0x20) {
+	    // getting hairy - refactor if more to come 202604 too //
+	    wl_display_flush(wl_display); // expect data fits to (100K+) soc...
+	    wsn &= 0xdf; // drop 0x20
+	}
+
     }
     return 0;
 }
