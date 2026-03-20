@@ -3,16 +3,18 @@
 #+BEGIN_HTML
 <table><tr><td>
 
-<b>Upper right corner of a screen</b>
+<b>Upper (right) corner of a screen</b>
 <br/>
-workspace, day, weekday, time,
-ISO 8601 week number and battery %
+· workspace, day, weekday, time, ISO 8601 week number and battery %
+<br/>
+· scrollwheel (or 2-finger drag) swiches workspaces
 <br/>
 <br/>
-<b>Näytön oikea yläkulma</b>
+<b>Näytön (oikea) yläkulma</b>
 <br/>
-työpöytä, päivä, viikonpäivä, aika,
-viikkonumero ja akun varaus
+· työpöytä, päivä, viikonpäivä, aika, viikkonumero ja akun varaus
+<br/>
+· hiiren rulla (tai 2 sormen veto) vaihtaa työpöytiä
 
 </td><td>
 
