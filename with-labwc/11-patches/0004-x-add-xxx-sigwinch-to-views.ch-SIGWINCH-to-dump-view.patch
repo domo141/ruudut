@@ -1,22 +1,22 @@
-From f5243b4f531826b209914448db76e0d86f9aefd9 Mon Sep 17 00:00:00 2001
+From 875f19273547d110f2eb79f12395bcf5da88cfee Mon Sep 17 00:00:00 2001
 From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Mon, 25 Mar 2024 16:38:25 +0200
 Subject: [PATCH] x add xxx-sigwinch-to-views.ch - SIGWINCH to dump views to a
  file
 
 ---
- include/xxx/xxx-sigwinch-to-views.ch | 111 +++++++++++++++++++++++++++
+ include/xxx/xxx-sigwinch-to-views.ch | 110 +++++++++++++++++++++++++++
  src/cycle/osd-field.c                |   4 +
  src/server.c                         |   5 ++
- 3 files changed, 120 insertions(+)
+ 3 files changed, 119 insertions(+)
  create mode 100644 include/xxx/xxx-sigwinch-to-views.ch
 
 diff --git a/include/xxx/xxx-sigwinch-to-views.ch b/include/xxx/xxx-sigwinch-to-views.ch
 new file mode 100644
-index 00000000..079bc0cb
+index 00000000..a3f9e07d
 --- /dev/null
 +++ b/include/xxx/xxx-sigwinch-to-views.ch
-@@ -0,0 +1,111 @@
+@@ -0,0 +1,110 @@
 +// -*- mode: c; c-file-style: "linux" -*- //
 +
 +// temporary hacks, not expected to be around too long(*)
@@ -45,7 +45,7 @@ index 00000000..079bc0cb
 +static char xxx_fn_buf[64];
 +static int xxx_fn_pos;
 +
-+static void xxx_fill_fn_pfx(struct server *server, const char *socket)
++static void xxx_fill_fn_pfx(const char *socket)
 +{
 +	const char * sn = strrchr(socket, '/');
 +	sn = sn? sn + 1: socket;
@@ -64,42 +64,41 @@ index 00000000..079bc0cb
 +#endif // XXX_CODE_FOR_SERVER_C
 +
 +
-+void xxx_dump_views(const struct server * server);
++void xxx_dump_views(void);
 +
 +#ifdef XXX_CODE_FOR_SERVER_C
 +static int xxx_handle_sigwinch(int signal, void *data)
 +{
-+	xxx_dump_views((const struct server *)data);
++	xxx_dump_views();
 +	return 0;
 +}
 +
-+static void xxx_sigwinch_to_views_init(struct server *server,
-+				       const char *socket)
++static void xxx_sigwinch_to_views_init(const char *socket)
 +{
-+	xxx_fill_fn_pfx(server, socket);
++	xxx_fill_fn_pfx(socket);
 +
-+	wl_event_loop_add_signal(server->wl_event_loop, SIGWINCH,
-+				 xxx_handle_sigwinch, server);
++	wl_event_loop_add_signal(server.wl_event_loop, SIGWINCH,
++				 xxx_handle_sigwinch, NULL);
 +}
 +#endif // XXX_CODE_FOR_SERVER_C
 +
 +
 +#ifdef XXX_CODE_FOR_OSD_FIELD_C
 +// included at the end of osd-field.c and refers static functions there //
-+void xxx_dump_views(const struct server * server)
++void xxx_dump_views(void)
 +{
 +	int fd = xxx_open_f4w('v','d');
 +	char buf[4096];
 +	unsigned int bp = 0;
 +	struct view *view;
-+	wl_list_for_each(view, &server->views, link) {
++	wl_list_for_each(view, &server.views, link) {
 +		if (! view_is_focusable(view)) continue;
 +
 +		__auto_type current = view->workspace;
 +		struct workspace *target;
 +
 +		unsigned char c = 1;
-+		wl_list_for_each(target, &server->workspaces.all, link) {
++		wl_list_for_each(target, &server.workspaces.all, link) {
 +			if (target == current) break;
 +			c++;
 +		}
@@ -129,7 +128,7 @@ index 00000000..079bc0cb
 +}
 +#endif // XXX_CODE_FOR_OSD_FIELD_C
 diff --git a/src/cycle/osd-field.c b/src/cycle/osd-field.c
-index cfc32811..cd424ed0 100644
+index 5bc671ff..7fee14ca 100644
 --- a/src/cycle/osd-field.c
 +++ b/src/cycle/osd-field.c
 @@ -368,3 +368,7 @@ cycle_osd_field_free(struct cycle_osd_field *field)
@@ -141,10 +140,10 @@ index cfc32811..cd424ed0 100644
 +#include "xxx/xxx-sigwinch-to-views.ch"
 +#undef XXX_CODE_FOR_OSD_FIELD_C
 diff --git a/src/server.c b/src/server.c
-index 9f271b10..fe31d790 100644
+index c5ca9fff..2f26188c 100644
 --- a/src/server.c
 +++ b/src/server.c
-@@ -68,6 +68,10 @@
+@@ -70,6 +70,10 @@
  #include "workspaces.h"
  #include "xwayland.h"
  
@@ -155,14 +154,14 @@ index 9f271b10..fe31d790 100644
  #define LAB_EXT_DATA_CONTROL_VERSION 1
  #define LAB_EXT_FOREIGN_TOPLEVEL_LIST_VERSION 1
  #define LAB_WLR_COMPOSITOR_VERSION 6
-@@ -753,6 +757,7 @@ server_start(struct server *server)
+@@ -752,6 +756,7 @@ server_start(void)
  	} else {
  		wlr_log(WLR_DEBUG, "WAYLAND_DISPLAY=%s", socket);
  	}
-+	xxx_sigwinch_to_views_init(server, socket);
++	xxx_sigwinch_to_views_init(socket);
  }
  
  void
 -- 
-2.52.0
+2.53.0
 

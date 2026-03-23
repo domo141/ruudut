@@ -1,4 +1,4 @@
-From d489581308a3be9567951d730009ccadde8b1983 Mon Sep 17 00:00:00 2001
+From 89062b37f2c30b30816980df86f8eb81a869bb68 Mon Sep 17 00:00:00 2001
 From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Sun, 31 Mar 2024 22:12:08 +0300
 Subject: [PATCH] x moveDelta (vtwm), dragThreshold (openbox) -- 4
@@ -12,19 +12,19 @@ they still be interested... :D)
  1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/src/input/cursor.c b/src/input/cursor.c
-index 2a681a6e..d47305d0 100644
+index a7cba87d..f87fa747 100644
 --- a/src/input/cursor.c
 +++ b/src/input/cursor.c
-@@ -619,6 +619,8 @@ cursor_get_resize_edges(struct wlr_cursor *cursor, struct cursor_context *ctx)
+@@ -619,6 +619,8 @@ cursor_get_resize_edges(struct wlr_cursor *cursor, const struct cursor_context *
  	return resize_edges;
  }
  
 +static double xxx_press_x = -10.0, xxx_press_y = -10.0;
 +
  bool
- cursor_process_motion(struct server *server, uint32_t time, double *sx, double *sy)
+ cursor_process_motion(uint32_t time, double *sx, double *sy)
  {
-@@ -645,6 +647,12 @@ cursor_process_motion(struct server *server, uint32_t time, double *sx, double *
+@@ -645,6 +647,12 @@ cursor_process_motion(uint32_t time, double *sx, double *sy)
  		dnd_icons_move(seat, seat->cursor->x, seat->cursor->y);
  	}
  
@@ -37,8 +37,8 @@ index 2a681a6e..d47305d0 100644
  	struct mousebind *mousebind;
  	wl_list_for_each(mousebind, &rc.mousebinds, link) {
  		if (ctx.type == LAB_NODE_CLIENT
-@@ -662,7 +670,7 @@ cursor_process_motion(struct server *server, uint32_t time, double *sx, double *
- 			actions_run(seat->pressed.ctx.view, server,
+@@ -662,7 +670,7 @@ cursor_process_motion(uint32_t time, double *sx, double *sy)
+ 			actions_run(seat->pressed.ctx.view,
  				&mousebind->actions, &seat->pressed.ctx);
  		}
 -	}
@@ -46,32 +46,32 @@ index 2a681a6e..d47305d0 100644
  
  	/*
  	 * Cursor context that is actually interacting with cursor and should
-@@ -1020,6 +1028,7 @@ process_release_mousebinding(struct server *server,
+@@ -1015,6 +1023,7 @@ process_release_mousebinding(struct cursor_context *ctx, uint32_t button)
  			default:
  				continue;
  			}
 +			///wlr_log(WLR_ERROR, "RILIIZ");
- 			actions_run(ctx->view, server, &mousebind->actions, ctx);
+ 			actions_run(ctx->view, &mousebind->actions, ctx);
  		}
  	}
-@@ -1082,6 +1091,9 @@ process_press_mousebinding(struct server *server, struct cursor_context *ctx,
+@@ -1077,6 +1086,9 @@ process_press_mousebinding(struct cursor_context *ctx,
  				&& modifiers == mousebind->modifiers) {
  			switch (mousebind->mouse_event) {
  			case MOUSE_ACTION_DRAG: /* fallthrough */
-+			    xxx_press_x = server->seat.cursor->x;
-+			    xxx_press_y = server->seat.cursor->y;
++			    xxx_press_x = server.seat.cursor->x;
++			    xxx_press_y = server.seat.cursor->y;
 +			    /* fallthrough */
  			case MOUSE_ACTION_CLICK:
  				/*
  				 * DRAG and CLICK actions will be processed on
-@@ -1109,6 +1121,7 @@ process_press_mousebinding(struct server *server, struct cursor_context *ctx,
+@@ -1104,6 +1116,7 @@ process_press_mousebinding(struct cursor_context *ctx,
  			}
  			consumed_by_frame_context |= mousebind->context == LAB_NODE_FRAME;
  			consumed_by_frame_context |= mousebind->context == LAB_NODE_ALL;
 +			///wlr_log(WLR_ERROR, "PREZZZ");
- 			actions_run(ctx->view, server, &mousebind->actions, ctx);
+ 			actions_run(ctx->view, &mousebind->actions, ctx);
  		}
  	}
 -- 
-2.52.0
+2.53.0
 

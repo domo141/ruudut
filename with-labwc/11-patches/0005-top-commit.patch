@@ -1,21 +1,21 @@
-From 0c5e798ae561e922dd54171e9d47b73c3fa7dbd6 Mon Sep 17 00:00:00 2001
+From bbc82f153a344c220b080e078935be4c153f9c1b Mon Sep 17 00:00:00 2001
 From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Tue, 14 Jan 2025 06:45:06 +0200
 Subject: [PATCH] + top commit +
 
 ---
- GNUmakefile         | 262 ++++++++++++++++++++++++++++++++++++++++++++
+ GNUmakefile         | 263 ++++++++++++++++++++++++++++++++++++++++++++
  binpatch-version.pl |  57 ++++++++++
- 2 files changed, 319 insertions(+)
+ 2 files changed, 320 insertions(+)
  create mode 100644 GNUmakefile
  create mode 100755 binpatch-version.pl
 
 diff --git a/GNUmakefile b/GNUmakefile
 new file mode 100644
-index 00000000..b155afa6
+index 00000000..e9a24499
 --- /dev/null
 +++ b/GNUmakefile
-@@ -0,0 +1,262 @@
+@@ -0,0 +1,263 @@
 +
 +# ln -sr pick-changes/GNUmakefile .
 +
@@ -127,38 +127,39 @@ index 00000000..b155afa6
 +
 +
 +$(eval $(call phony_target, l1 ))
-+$(rcp):   # git git -P log --oneline --boundary since wt-yyyy-mm-dd-{commit}
++$(rcp):   # git git -P log --oneline --boundary since wt-yyyy-mm-dd-u{commit}
 +	$(sh)
 +	set -- $(subst -, ,$(notdir $(CURDIR)))
 +	test $$# -ge 5 || { IFS=-; die "cannot get base from dirname '$$*'"; }
-+	test $${#5} -ge 7 || die "length if '$$5' less than 7"
-+	case $$5 in *[!0-9a-f]*) die "'$$5' not [0-9a-f]*" ;; esac
-+	x_exec git -P log --oneline --boundary $$5..
++	test $${#5} -ge 8 || die "length of '$$5' less than 8"
++	case $$5 in *[!0-9a-fu]*) die "'$$5' not u[0-9a-f]*" ;; esac
++	x_exec git -P log --oneline --boundary $${5#?}..
 +
 +
 +$(eval $(call phony_target, ria ))
-+$(rcp):   # git rebase interactive autostash since wt-yyyy-mm-dd-{commit}
++$(rcp):   # git rebase interactive autostash since wt-yyyy-mm-dd-u{commit}
 +	$(sh)
 +	set -- $(subst -, ,$(notdir $(CURDIR)))
 +	test $$# -ge 5 || { IFS=-; die "cannot get base from dirname '$$*'"; }
-+	test $${#5} -ge 7 || die "length if '$$5' less than 7"
-+	case $$5 in *[!0-9a-f]*) die "'$$5' not [0-9a-f]*" ;; esac
-+	x_exec git rebase --interactive --autostash $$5
++	test $${#5} -ge 8 || die "length of '$$5' less than 8"
++	case $$5 in *[!0-9a-fu]*) die "'$$5' not u[0-9a-f]*" ;; esac
++	x_exec git rebase --interactive --autostash $${5#?}
 +
 +
 +$(eval $(call phony_target, f-p ))
-+$(rcp):   # git format-patch since wt-yyyy-mm-dd-{commit}
++$(rcp):   # git format-patch since wt-yyyy-mm-dd-u{commit}
 +	$(sh)
 +	set -- $(subst -, ,$(notdir $(CURDIR)))
 +	test $$# -ge 5 || { IFS=-; die "cannot get base from dirname '$$*'"; }
-+	test $${#5} -ge 7 || die "length if '$$5' less than 7"
-+	case $$5 in *[!0-9a-f]*) die "'$$5' not [0-9a-f]*" ;; esac
++	test $${#5} -ge 8 || die "length of '$$5' less than 8"
++	case $$5 in *[!0-9a-fu]*) die "'$$5' not u[0-9a-f]*" ;; esac
 +	test -d 11-patches-new && rm -rf 11-patches-new
 +	export FILTER_BRANCH_SQUELCH_WARNING=1
-+	echo format-patch since commit $$5
++	cmit=$${5#?}
++	echo format-patch since commit $$cmit
 +	git filter-branch -f \
 +	    --setup "#set -x
-+		eval `git log -1 --format='ct=%ct at=%at' $$5`"'
++		eval `git log -1 --format='ct=%ct at=%at' $$cmit`"'
 +		test $$ct -ge $$at && RSECS=$$ct || RSECS=$$at
 +		RSECS=$$(( (RSECS / 60 + 1) * 60 ))
 +	    '\
@@ -166,9 +167,9 @@ index 00000000..b155afa6
 +		at=$${GIT_AUTHOR_DATE#@}; az=$${at##* }; at=$${at%% *}
 +		test $$at -gt $$RSECS && RSECS=$$at || RSECS=$$((RSECS + 1))
 +		GIT_COMMITTER_DATE="@$$RSECS $$az"
-+	    ' $$5..
++	    ' $$cmit..
 +	mkdir 11-patches-new
-+	x_exec git format-patch -o 11-patches-new -N $$5..
++	x_exec git format-patch -o 11-patches-new -N $$cmit..
 +
 +
 +$(eval $(call phony_target, jl ))
@@ -342,5 +343,5 @@ index 00000000..c1811fce
 +    #substr $_, $pos $gverlen, $gver; # did not wrok :/
 +}
 -- 
-2.52.0
+2.53.0
 
