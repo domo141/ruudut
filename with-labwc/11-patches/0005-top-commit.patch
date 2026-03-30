@@ -1,24 +1,23 @@
-From bbc82f153a344c220b080e078935be4c153f9c1b Mon Sep 17 00:00:00 2001
+From 2790c92514e9b03186cf3347d911b004ecd8ba91 Mon Sep 17 00:00:00 2001
 From: Tomi Ollila <tomi.ollila@iki.fi>
 Date: Tue, 14 Jan 2025 06:45:06 +0200
 Subject: [PATCH] + top commit +
 
 ---
- GNUmakefile         | 263 ++++++++++++++++++++++++++++++++++++++++++++
+ GNUmakefile         | 264 ++++++++++++++++++++++++++++++++++++++++++++
  binpatch-version.pl |  57 ++++++++++
- 2 files changed, 320 insertions(+)
+ 2 files changed, 321 insertions(+)
  create mode 100644 GNUmakefile
  create mode 100755 binpatch-version.pl
 
 diff --git a/GNUmakefile b/GNUmakefile
 new file mode 100644
-index 00000000..e9a24499
+index 00000000..8b6a9c41
 --- /dev/null
 +++ b/GNUmakefile
-@@ -0,0 +1,263 @@
+@@ -0,0 +1,264 @@
 +
-+# ln -sr pick-changes/GNUmakefile .
-+
++# -v- used when trial&erroring makefile
 +# strace make ... s ... 2>&1 | grep stat
 +# strace -ff -omsl make ... s ...
 +
@@ -75,7 +74,7 @@ index 00000000..e9a24499
 +
 +
 +$(eval $(call cmd_and_args, b ))
-+$(rcp): # build
++$(rcp): # build     (may be useful: grep -C1 subprojects-cache GNUmakefile)
 +	$(sh)
 +	test -f data/labwc.desktop || die "Not in labwc git toplevel dir (?)"
 +	PATH=$${PWD%/*}/11-patches:$$PATH
@@ -179,7 +178,7 @@ index 00000000..e9a24499
 +
 +
 +$(eval $(call phony_target, nmd ))
-+$(rcp):  # diff the output of nm, built labwc, and the "installed" one
++$(rcp):  # diff the output of nm, build/labwc with the one in ~/.local/libexec/
 +	set -- build/labwc $$HOME/.local/libexec/labwc
 +	ls -l $$*
 +	nm "$$1" > nm1 || { rm nm1; exit; }
@@ -190,19 +189,21 @@ index 00000000..e9a24499
 +
 +
 +$(eval $(call cmd_and_args, run ))
-+$(rcp):  # run $(CURDIR)/build/labwc when PWD=$HOME
++$(rcp):  # cd $HOME; $(CURDIR)/build/labwc  (option: d|dd|ddd|v)
 +	$(sh)
 +	x cd $$HOME
-+	case '$(ARGS)'	in d) d=-d
-+			;; dd) d=; export WAYLAND_DEBUG=1
-+			;; ddd) d=-d; export WAYLAND_DEBUG=1
-+			;; *) d=
++	case '$(ARGS)'
++		in d) o=-d
++		;; dd) o=; export WAYLAND_DEBUG=1
++		;; ddd) o=-d; export WAYLAND_DEBUG=1
++		;; v) o=--version
++		;; *) o=
 +	esac
-+	x_exec $(CURDIR)/build/labwc $$d
++	x_exec $(CURDIR)/build/labwc $$o
 +
 +
 +$(eval $(call phony_target, upd ))
-+$(rcp):   # update labwc in $HOME/.local/libexec
++$(rcp):   # update labwc in $HOME/.local/libexec/
 +	$(sh)
 +	ls -l build/labwc
 +	if test -f $$HOME/.local/libexec/labwc
@@ -218,7 +219,7 @@ index 00000000..e9a24499
 +
 +
 +$(eval $(call phony_target, llb ))
-+$(rcp):   # list labwc binaries in $HOME/.local/libexec
++$(rcp):   # list labwc binaries in $HOME/.local/libexec/
 +	$(sh)
 +	x cd $$HOME/.local/libexec
 +	set +f

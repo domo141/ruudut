@@ -68,7 +68,7 @@ help:
 XR_LUD = xr-labwc-upstream
 
 .PHONY: fetch
-fetch:  # git fetch -v -p changes in %XR_LUD/
+fetch:  # git fetch -v -p changes in %XR_LUD/  ((clone or symlink))
 	$(sh)
 	td=$(XR_LUD)
 	test -d $(XR_LUD) ||
@@ -79,7 +79,7 @@ fetch:  # git fetch -v -p changes in %XR_LUD/
 mkwt:   # make worktree from @{u} (or C=...) commit in %XR_LUD
 	$(sh)
 	set -- $(ARGS)
-	test $$# = 1 || die "Usage: make $@ (wt-sfx | '.')"
+	test $$# = 1 || die "Usage: make $@ (wt-sfx | '.') [C=commit]"
 	set_dwt
 	test "$$1" = . || wt=$$wt-$$1
 	test -e $$wt && die "'$$wt/' exists - created already (expected?)" '' \
@@ -97,7 +97,7 @@ lswt:   # list worktrees
 .PHONY: apply
 apply:  # apply patches from ./11-patches/ to worktree
 	$(sh)
-	test '$(ARGS)' || die "Usage: make $@ {worktree | '.'}"
+	test '$(ARGS)' || die "Usage: make $@ {worktree | '.' [C=commit]}"
 	test '$(ARGS)' = . && set_dwt || wt='$(ARGS)'
 	toolsd=$(CURDIR); toolsd=$${toolsd%/*}/tools
 	x cd "$$wt"
@@ -113,7 +113,7 @@ apply:  # apply patches from ./11-patches/ to worktree
 	exec git describe --dirty
 
 .PHONY: fwa
-fwa:    # * shortcut fetch, mkwt and apply (@{u} or C=...) *
+fwa:    # * shortcut fetch, mkwt and apply  (@{u} or C=...) *
 	test '$(.VARIABLES)' || exit 0
 	$(MAKE) fetch $(MAKEOVERRIDES)
 	$(MAKE) mkwt . $(MAKEOVERRIDES)
@@ -121,7 +121,7 @@ fwa:    # * shortcut fetch, mkwt and apply (@{u} or C=...) *
 	$(MAKE) apply . $(MAKEOVERRIDES)
 
 .PHONY: lspz
-lspz:   # list patches if arg: # of lines (e.g. 1, 4, 999)
+lspz:   # list patches - with arg, # of lines (e.g. 1, 4, 999) in patches
 	test '$(.VARIABLES)' || exit 0
 	set +f
 	test '$(ARGS)' || exec stat -c '%5s %n' 11-patches/*
@@ -131,7 +131,7 @@ lspz:   # list patches if arg: # of lines (e.g. 1, 4, 999)
 .PHONY: l
 l:      # git log --pretty=fuller --name-status -m  in worktree / . / @{u}
 	$(sh)
-	test '$(ARGS)' || die "Usage: make $@ {worktree/ | '.' | u}"
+	test '$(ARGS)' || die "Usage: make $@ {worktree/ | '.' | u} [C=commit]"
 	test '$(ARGS)' = . && set_dwt || wt='$(ARGS)'
 	test '$(ARGS)' = u && { wt=$(XR_LUD); a=$C; } || a=
 	x_exec git -C "$$wt" log --pretty=fuller --name-status -m $$a
@@ -139,7 +139,7 @@ l:      # git log --pretty=fuller --name-status -m  in worktree / . / @{u}
 .PHONY: t
 t:      # tig in worktree / . / @{u}  (fyi: shows also "describe" info)
 	$(sh)
-	test '$(ARGS)' || die "Usage: make $@ {worktree/ | '.' | u}"
+	test '$(ARGS)' || die "Usage: make $@ {worktree/ | '.' | u} [C=commit]"
 	test '$(ARGS)' = . && set_dwt || wt='$(ARGS)'
 	test '$(ARGS)' = u && { wt=$(XR_LUD); a=$C; } || a=
 	x_exec tig -C "$$wt" $$a
@@ -152,7 +152,7 @@ prune:  # prune worktrees removed with rm(1)
 	git -C $(XR_LUD) worktree list
 
 .PHONY: .
-.:      # run $(MAKE) in "default" (.) worktree
+.:      # run $(MAKE) in "default" (.) worktree  (C=...)
 	$(sh)
 	set_dwt
 	echo cd $$wt
