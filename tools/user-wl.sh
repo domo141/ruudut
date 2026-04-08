@@ -5,7 +5,7 @@
 # multitool-tmpl3.sh -- perhaps the best of these in multitool-tmpl series
 #
 # Created: Tue 02 Apr 2024 19:39:56 EEST too
-# Last modified: Sat 11 Oct 2025 14:31:43 +0300 too
+# Last modified: Mon 30 Mar 2026 21:03:58 +0300 too
 #
 # SPDX-License-Identifier: Unlicense
 #
@@ -34,14 +34,15 @@ cmd_i   interactively choose command from list to be executed'
 cmd_i ()
 {
 	command -v fzf >/dev/null &&
-		set -- fzf +s -e --tac --no-sort --no-info ||
+		set -- fzf +s -e --tac --no-sort --no-info --no-mouse ||
 		set -- awk '/.../ { printf "%2d %s\n", FNR, $0 }'
 	l=`"$@" << EOF
 $0 size
 $0 dirs
 xev
 wev
-wayland-info
+waycheck
+wayland-info | less
 weston-info
 wlrctl output list
 wlr-randr | less
@@ -53,6 +54,7 @@ EOF` || exit 0
 		exit 0
 	}
 	test "$l" || exit 0
+	set +f
 	case $l in *'|'*) x_eval "$l"; exit; esac
 	x_exec $l
 	exit not reached
@@ -209,7 +211,7 @@ cmd_dirs ()
 }
 
 cmds=$cmds'
-cmd_debug  run client w/ WAYLAND_DEBUG=1'
+cmd_debug  exec command w/ WAYLAND_DEBUG=1 in env'
 cmd_debug ()
 {
 	test $# = 0 && usage 'command [args]'
@@ -220,6 +222,8 @@ cmd_debug ()
 
 # ---
 
+#test $# -gt 1 && test -d "$1" && { cd "$1"; shift; }
+
 ifs=$IFS; readonly ifs
 IFS='
 '
@@ -227,7 +231,7 @@ test $# = 0 && {
 	echo
 	echo Usage: $0 '{command} [args]'
 	echo
-	echo Commands of $bn0 "('.' to list, '.. cmd(pfx)' to view source):"
+	echo Commands of $bn0 "('.' to list, '.cmd(pfx)-re' to view source):"
 	echo
 	# 2 outcommented alternatives to the fork(2)less shell implementation
 	#echo "$cmds" | sed 's/ .*//; s/cmd_/  /' | column
@@ -270,13 +274,17 @@ in 0/.)
 	done
 	echo
 	exit
-;; 1/..)
+;; 0/..)
+	echo '"." -- too broad regexp may be accident.'" if not, enter '...'"
+	exit 0
+;; 0/.*)
 	set +x
 	# $1 not sanitized but that should not be too much of a problem...
-	exec sed -n "/^cmd_$1/,/^}/p; \${g;p}" "$0"
-;; */.) cm=$1; shift
-;; */..) cmd=..; usage cmd-prefix
+	exec sed -n "/^cmd_${cm#.}/,/^}/p; \${g;p}" "$0"
+#;; */[!a-z0-9_])
+#	die "'$cm' -- commands start with word character"
 
+;; */dbg) cm=debug
 #;; */d) cm=diff
 ;; *-*-*) die "'$cm' with too many '-'s"
 ;; *-*) cm=${cm%-*}_${cm#*-}
@@ -288,13 +296,13 @@ do
 	m=${m%% *}; m=${m#cmd_}
 	case $m in
 		$cm) cp= cc=1 cmd=$cm; break ;;
-		$cm*) cp=$cc; cc=$m${cc:+, $cc}; cmd=$m
+		$cm*) cp=$cc; cc="'$m'"${cc:+, $cc}; cmd=$m
 	esac
 done
 IFS=$ifs
 
-test "$cc" || die "$0: $cm -- command not found."
-test "$cp" && die "$0: $cm -- ambiguous command: matches $cc."
+test "$cc" || die "$0: '$cm' -- command not found."
+test "$cp" && die "$0: '$cm' -- ambiguous command: matches $cc."
 
 unset cc cp cm
 #set -x
@@ -302,8 +310,8 @@ cmd'_'$cmd "$@"
 exit
 
 #!perl
-#line 210
-#---- 210
+#line 314
+#---- 314
 
 use 5.8.1;
 use strict;
