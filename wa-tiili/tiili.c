@@ -900,14 +900,14 @@ static int do_args(int argc, char ** argv)
 	    fprintf(stderr, "\nUsage: %s [-f font] [-d wdays] "
 		    "[-a n] [-n(n:n|n)] [-m margin] [-w wnl] [-O]\n\n\
   wdays: locale in format la_TE.UTF-8 or days in format su,mo,tu,we,th,fr,sa\n\
- -a num: extra black pixel lines after bottom glyph, default 2\n\
- -n ...: narrow ':' and '.' if in format n:n, narrow spaces if in format n\n\
- -m ...: layer-shell margin from upper left (pos) or right (neg): default -150\
+ -a num: add black pixel rows below the text line; default 2\n\
+ -n ...: narrow ':' and '.' if in format n:n | narrow spaces if in format n\n\
+ -m ...: layer-shell margin from top left (+) or top right (-); default -150\
 \n\
- -w ...: letter (or any string) before week number. default 'w'\n\
- -O    : replace the font's '0' with 'O'\n\n\
+ -w ...: letter (or any string) before week number; default 'w'\n\
+ -O    : replace '0's (zero) with 'O's (uppercase o)\n\n\
  eksamppeli: %s -fHack-24 -dfi_FI -a0 -n 2:2 -n 2 -wv -O\n\
-             but with e.g. 'sv_SE' one needs '.UTF-8'...\n\n", b, b);
+             (with e.g. 'sv_SE' one would need '.UTF-8'...)\n\n", b, b);
 	    exit(1);
 	}
     }
