@@ -50,7 +50,7 @@ index 00000000..a3f9e07d
 +	const char * sn = strrchr(socket, '/');
 +	sn = sn? sn + 1: socket;
 +	xxx_fn_pos = snprintf(xxx_fn_buf, sizeof xxx_fn_buf, "%s/%s,XX,",
-+			      getenv("XDG_RUNTIME_DIR"), socket);
++			      getenv("XDG_RUNTIME_DIR"), sn);
 +	//assert((size_t)xxx_fn_pos < sizeof xxx_fn_buf - 2);
 +	xxx_fn_pos -= 3;
 +}
