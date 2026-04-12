@@ -1,0 +1,52 @@
+From 317e5b76e707f01f4cddd798947e1fb09afd1a41 Mon Sep 17 00:00:00 2001
+From: Tomi Ollila <tomi.ollila@iki.fi>
+Date: Wed, 8 Apr 2026 09:48:30 +0300
+Subject: [PATCH] x tmp hack to keep focus when starting an x client from an x
+ client
+
+When starting x client from another x client (e.g. terminal window),
+with focusFollowsMouse=yes and followMouseRequiresMovement=no,
+for some reason focus moves to the new x client and getting focus
+back to the previous one requires either clicking or moving cursor
+out of the x client it is on (and doesn't have focus).
+
+The same does not happen if either (or both) of the windows are
+wayland views...
+
+This change hacks out one of the focus attempts when view under
+cursor is different from the new started view.
+
+One of the (gdb) runs to figure out call paths; with
+those and #2834 helped there...
+
+gdb -batch -x /dev/stdin --args build/labwc <<EOF
+set pagination off
+break desktop_focus_view
+commands
+  silent
+  backtrace 1
+  continue
+end
+run
+EOF
+---
+ src/view-impl-common.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/view-impl-common.c b/src/view-impl-common.c
+index 092ca55f..31060427 100644
+--- a/src/view-impl-common.c
++++ b/src/view-impl-common.c
+@@ -13,6 +13,9 @@ view_impl_map(struct view *view)
+ 
+ 	/* Leave minimized, if minimized before map */
+ 	if (!view->minimized) {
++		// tmp hax to keep focus on x client when mapping another x client //
++		struct cursor_context ctx = get_cursor_context(); // thanks #2834 //
++		if (!ctx.view || /*view_get_root*/(ctx.view) == /*view_get_root*/(view))
+ 		desktop_focus_view(view, /* raise */ true);
+ 	}
+ 
+-- 
+2.53.0
+
