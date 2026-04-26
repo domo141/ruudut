@@ -39,7 +39,7 @@ wl-protocols.c += $(BD)/wlr-layer-shell-unstable-v1-protocol.c
 wl-protocols.h += $(BD)/idle-inhibit-unstable-v1-client-protocol.h
 wl-protocols.c += $(BD)/idle-inhibit-unstable-v1-protocol.c
 
-$(BD)/lorvi: lorvi.c $(wl-protocols.h) $(wl-protocols.c)
+$(BD)/lorvi: lorvi.c $(wl-protocols.h) $(wl-protocols.c) Makefile
 	$(CC) $(CFLAGS) -o $@ $< $(wl-protocols.c) -lwayland-client -lrt
 
 $(BD):

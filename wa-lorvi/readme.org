@@ -14,7 +14,7 @@ Keeps display unlocked (and powered on) while process
 exists.
 Exits after timeout, double-click or signal.
 <br/>
-When run without options this program prints Usage.
+When run without options Usage is printed.
 
 </td><td valign="top" width="50%">
 
@@ -25,7 +25,7 @@ silloin kuin tämä tietokoneohjelma on ajossa.
 Ajo loppuu annetun ajan, kaksoiskosketuksen tai
 signaalin saapumisen jälkeen.
 <br/>
-Ilman optioita ajettuna tämä ohjelma tulostaa Usagen.
+Ilman optioita ajettuna tulostetaan Usage.
 
 </td></tr></table>
 #+END_HTML

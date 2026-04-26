@@ -1,7 +1,7 @@
 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*- */
 
 // Created: Wed 15 Oct 19:00:58 EET 2025 too
-// Last Modified: Sun 02 Nov 2025 00:00:34 +0200 too
+// Last Modified: Sun 26 Apr 2026 22:51:17 +0300 too
 
 #define _POSIX_C_SOURCE 200112L
 #include "more-warnings.h"
@@ -511,7 +511,6 @@ static int secs_from_hm(const char * hm)
 {
     char * ep;
     int h = strtol(hm, &ep, 10);
-    if (h > 23) return 24 * 3600;
     int m;
     if (*ep == ':' || *ep == '.') {
 	m = atoi(ep + 1);
@@ -525,7 +524,7 @@ static inline
 int until_time(const char * s)
 {
     tzset();
-    int csecs = (int)((time(NULL) - timezone) % 86400);
+    int csecs = (int)((time(NULL) - timezone + daylight * 3600) % 86400);
     int osecs = secs_from_hm(s);
     int dsecs = osecs - csecs;
     if (dsecs < 0) dsecs += 86400;
@@ -552,7 +551,7 @@ static const char * optarg_(const char * optp, /*const*/ char *** argvp)
 }
 
 #define NAME "lorvi"
-#define VER "1.0"
+#define VER "1.1"
 
 int main(int argc, char ** argv)
 {
@@ -565,6 +564,7 @@ int main(int argc, char ** argv)
 	 "Usage: %s [-Vq] [-g [Ø][±xoff±yoff]] [-]time\n\n"
 	 "   time (h or h:m): exit after h hours (+ m minutes)\n"
 	 "  -time (h or h:m): exit at that time\n"
+	 "\nLorvi idle inhibits max. 21 hours (75600 seconds).\n"
 	 "\nOptionally:\n"
 	 "  -g diameter and/or ±xoff±yoff: size and location of the (¡¡)\n"
 	 "  -q: quiet - don't print the exit time message to stdout\n"
