@@ -280,15 +280,38 @@ static int read_batstatus(void)
     char * p = buf - 1;
     do {
 	p++;
-#define LIT "POWER_SUPPLY_STATUS="
-	/**/ if (MEMCMP_LITERAL(p, LIT) == 0) status = p + sizeof (LIT) - 1;
+#define LIT "POWER_SUPPLY_"
+	if (MEMCMP_LITERAL(p, LIT) == 0) {
+	    p += sizeof (LIT) - 1;
 #undef LIT
-#define LIT "POWER_SUPPLY_CHARGE_FULL="
-	else if (MEMCMP_LITERAL(p, LIT) == 0) c_full = p + sizeof (LIT) - 1;
+	    char c = p[0];
+	    /**/ if (c == 'S') {
+#define LIT "STATUS="
+		/**/ if (MEMCMP_LITERAL(p, LIT) == 0)
+		    status = p + sizeof (LIT) - 1;
 #undef LIT
-#define LIT "POWER_SUPPLY_CHARGE_NOW="
-	else if (MEMCMP_LITERAL(p, LIT) == 0) c_now = p + sizeof (LIT) - 1;
+	    }
+	    else if (c == 'C') {
+#define LIT "CHARGE_FULL="
+		/**/ if (MEMCMP_LITERAL(p, LIT) == 0)
+		    c_full = p + sizeof (LIT) - 1;
 #undef LIT
+#define LIT "CHARGE_NOW="
+		else if (MEMCMP_LITERAL(p, LIT) == 0)
+		    c_now = p + sizeof (LIT) - 1;
+#undef LIT
+	    }
+	    else if (c == 'E') {
+#define LIT "ENERGY_FULL="
+		/**/ if (MEMCMP_LITERAL(p, LIT) == 0)
+		    c_full = p + sizeof (LIT) - 1;
+#undef LIT
+#define LIT "ENERGY_NOW="
+		else if (MEMCMP_LITERAL(p, LIT) == 0)
+		    c_now = p + sizeof (LIT) - 1;
+#undef LIT
+	    }
+	}
     } while ((p = strchr(p, '\n')) != NULL);
 
     long i_full = c_full? atol(c_full): 0;
