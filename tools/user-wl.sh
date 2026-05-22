@@ -5,7 +5,7 @@
 # multitool-tmpl3.sh -- perhaps the best of these in multitool-tmpl series
 #
 # Created: Tue 02 Apr 2024 19:39:56 EEST too
-# Last modified: Mon 30 Mar 2026 21:03:58 +0300 too
+# Last modified: Fri 22 May 2026 21:14:12 +0300 too
 #
 # SPDX-License-Identifier: Unlicense
 #
@@ -61,16 +61,17 @@ EOF` || exit 0
 }
 
 cmds=$cmds'
-cmd_screenshot screenshot (grim, optionally slurp)'
+cmd_screenshot screenshot (grim, optionally slurp, lswt)'
 cmd_screenshot ()
 {
 	case ${1-} in [1-9]|[1-9][0-9]) sleepsecs=$1; shift ;; *) sleepsecs=
 	esac
 
 	test $# = 0 && usage \
-		"[sleepsecs] [d] [c] ('f'|'s'|wxh+x+y) [e] [t]" '' \
+		"[sleepsecs] [d] [c] ('f'|'s'|wxh+x+y|'T') [e] [t]" '' \
 		" 'f': \"full\" output | 's': rectangle using slurp" \
 		"  wxh+x+y - or slurp format - to enter rectangle" \
+		" 'T': use lswt and fzf to choose toplevel to capture" \
 		" 'd': \"dry run\" | 'c': capture cursor | 'e': edit" \
 		" 't': temporary; show after capture, then remove"
 
@@ -92,6 +93,15 @@ cmd_screenshot ()
 		test $# = 4 || die "Unexpected format in '$a'"
 		s=$a
 	}
+	lswt_to_c ()
+	{
+		i=`lswt -c iat | fzf -0 +s --tac --delimiter , --with-nth 2..`
+		case $i in *,*,*) ;; *) exit ;; esac
+		echo ${i#*,}
+		i=${i%%,*}
+		ox=${i%${i#??????}}
+		c="-T $i"
+	}
 	d= c= t= e= s=
 	for a
 	do	case $a in *d*) d=true	; esac
@@ -102,6 +112,7 @@ cmd_screenshot ()
 		case $a in *s*) s=s	; esac
 		case $a in [1-9]*x[1-9]*'+'[1-9]*+[1-9]*) gcnv; esac
 		case $a in [1-9]*,[1-9]*' '[1-9]*x[1-9]*) gchk; esac
+		case $a in *T*) s=T	; esac
 	done
 	test "$t" && test "$e" && die "'t' and 'e' mutually exclusive"
 
@@ -111,6 +122,7 @@ cmd_screenshot ()
 
 	case $s in s) s=`slurp -d` ox=${s##* }
 		;; f) ox=fs s=
+		;; T) lswt_to_c; s=
 		;; *) ox=${s##* }
 	esac
 
