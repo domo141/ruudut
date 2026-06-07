@@ -94,6 +94,11 @@ lswt:   # list worktrees
 	$(sh)
 	x_exec git -C $(XR_LUD) worktree list
 
+.PHONY: descwt
+descwt: # git -P wt-* describe
+	ds='$(wildcard wt-*)'
+	for d in $$ds; do printf '%s  ' $$d; git -C $$d describe; done
+
 .PHONY: apply
 apply:  # apply patches from ./11-patches/ to worktree
 	$(sh)
